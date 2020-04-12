@@ -15,11 +15,20 @@ int32 arm_inst_ldr(cpu_state_t *st, uint32 inst)
 
 	// 如果P为0， 此时如果W为0则正常访问，如果W为1则再用户模式下访问 （因为都在用户模式下，所以不用管）
 	// 如果P为1， 此时如果W为0则不更新基址寄存器，否则结果写会基址寄存器
-	uint32 data = st->memory[addr];
-	if (rd == r_pc)
-		st->registers[r_pc] = data & 0xfffffffc;
+
+	//如果rn是pc，则直接填写地址+8即可
+	if (rn == r_pc)
+	{
+		st->registers[rd] = addr + 8;
+	}
 	else
-		st->registers[r_pc] = data;
+	{
+		uint32 data = mem_ld32(st->mem, addr);
+		if (rd == r_pc)
+			st->registers[r_pc] = data & 0xfffffffc;
+		else
+			st->registers[rd] = data;
+	}
 
 	//写回
 	if (p == 1 && w == 1)

@@ -8,7 +8,7 @@ int32 arm_inst_blx_2(cpu_state_t *st, uint32 inst)
 	uint32 sbo3 = (inst >> 8) & 0x000f;
 	uint32 rm = inst & 0x000f;
 	//sbo应该是1
-	if (sbo1 != 1 || sbo2 != 1 || sbo3 != 1)
+	if (sbo1 != 0x000f || sbo2 != 0x000f || sbo3 != 0x000f)
 		return EXEC_UNPREDICTABLE;
 	//跳转
 	uint32 target = st->registers[rm];

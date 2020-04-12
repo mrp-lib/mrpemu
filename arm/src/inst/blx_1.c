@@ -9,7 +9,7 @@ int32 arm_inst_blx_1(cpu_state_t *st, uint32 inst)
 	st->t = true;
 	//跳转
 	int32 offset = (((int32)inst << 8) >> 8);
-	st->registers[r_pc] += (offset << 2) + (h << 1);
+	st->registers[r_pc] += (offset << 2) + (h << 1) + 4; //要+4
 	//OK
 	return EXEC_SUCCESS;
 }

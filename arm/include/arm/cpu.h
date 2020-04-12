@@ -2,6 +2,7 @@
 #define __ARM_CPU_H__
 
 #include "common/type.h"
+#include "arm/mem.h"
 
 #define r_sp 13 //SP寄存器（栈）
 #define r_lr 14 //LR寄存器（返回）
@@ -30,13 +31,15 @@ typedef struct
 	bool v;
 	bool t;
 
-	uint8 *memory;	 //内存空间
-	uint32 mem_size; //内存大小
+	//内存空间
+	memory_t *mem;
 
 } cpu_state_t;
 
+typedef int32 (*arm_inst_func_t)(cpu_state_t *st, uint32 inst); //arm指令处理函数
+
 //创建一个CPU并制定内存大小
-cpu_state_t *cpu_create(uint32 mem_size);
+cpu_state_t *cpu_create(memory_t *mem);
 
 //销毁CPU
 void cpu_destory(cpu_state_t *st);
@@ -46,5 +49,8 @@ uint32 cpu_fetch_inst(cpu_state_t *st);
 
 //执行指令
 int32 cpu_exec_inst(cpu_state_t *st, uint32 inst);
+
+//打印寄存器信息
+void cpu_print_regs(cpu_state_t *st);
 
 #endif

@@ -21,7 +21,7 @@ int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst)
 			if ((regs >> (14 - i)) & 0x0001)
 			{
 
-				st->registers[14 - i] = st->memory[addr];
+				st->registers[14 - i] = mem_ld32(st->mem, addr);
 				addr -= 4;
 			}
 		}
@@ -32,7 +32,7 @@ int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst)
 			if ((regs >> i) & 0x0001)
 			{
 
-				st->registers[i] = st->memory[addr];
+				st->registers[i] = mem_ld32(st->mem, addr);
 				addr += 4;
 			}
 		}
@@ -44,7 +44,7 @@ int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst)
 			{
 
 				addr -= 4;
-				st->registers[14 - i] = st->memory[addr];
+				st->registers[14 - i] = mem_ld32(st->mem, addr);
 			}
 		}
 		break;
@@ -54,7 +54,7 @@ int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst)
 			if ((regs >> i) & 0x0001)
 			{
 
-				st->registers[i] = st->memory[addr];
+				st->registers[i] = mem_ld32(st->mem, addr);
 				addr += 4;
 			}
 		}
@@ -68,7 +68,7 @@ int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst)
 			addr -= 4;
 		else if (pu == 0b0011)
 			addr += 4;
-		uint32 value = st->memory[addr];
+		uint32 value = mem_ld32(st->mem, addr);
 		if (pu == 0b0000)
 			addr -= 4;
 		else if (pu == 0b0001)

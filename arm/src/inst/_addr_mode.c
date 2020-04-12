@@ -68,3 +68,60 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 		}
 	}
 }
+
+//cond 0 0 0 P U 1 W L Rn Rd immedH 1 S H 1 ImmedL
+//cond 0 0 0 P U 0 W L Rn Rd SBZ    1 S H 1 Rm
+uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
+{
+	uint32 b22 = (inst >> 22) & 0x0001;
+	uint32 p = (inst >> 24) & 0x0001;
+	uint32 u = (inst >> 23) & 0x0001;
+	uint32 w = (inst >> 21) & 0x0001;
+	uint32 rn = (inst >> 16) & 0x000f;
+
+	uint32 addr;
+
+	//立即数偏移
+	if (b22 == 1)
+	{
+		uint32 immh = (inst >> 8) & 0x000f;
+		uint32 imml = inst & 0x000f;
+		uint32 imm = (immh << 4) | immh;
+		if (p == 1)
+		{
+			addr = (u == 1) ? st->registers[rn] + imm : st->registers[rn] - imm;
+			if (w == 1)
+				st->registers[rn] = addr;
+		}
+		else
+		{
+			if (w == 0)
+			{
+				addr = st->registers[rn];
+				st->registers[rn] = (u == 1) ? st->registers[rn] + imm : st->registers[rn] - imm;
+			}
+			//else ERROR
+		}
+	}
+	//寄存器偏移
+	else
+	{
+		uint32 rm = inst & 0x000f;
+		if (p == 1)
+		{
+			addr = (u == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
+			if (w == 1)
+				st->registers[rn] = addr;
+		}
+		else
+		{
+			if (w == 0)
+			{
+				addr = st->registers[rn];
+				st->registers[rn] = (u == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
+			}
+			// else ERROR
+		}
+	}
+	return addr;
+}

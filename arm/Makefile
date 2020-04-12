@@ -10,6 +10,10 @@ cc				:=		gcc
 c_flags			:=		-I $(c_includes) \
 						-g
 
+link_flags		:=		-Llibs/zlib-linux/lib/ \
+						--static -lz \
+						-g
+
 # 输入文件扫描
 files := $(shell find $(src_dir) -name '*.c')
 c_files := $(files:$(src_dir)/%=%)
@@ -24,7 +28,7 @@ build_dirs		:=		$(dir $(build_files))
 $(target): $(build_files)
 	@mkdir -p $(dir $(target))
 	@echo "[LK] -> $@"
-	@$(cc) -lz -o $@ $^ -lpthread
+	@$(cc) $(link_flags) -o $@ $^ -lpthread
 	@echo "complate!"
 
 # 逐个编译文件

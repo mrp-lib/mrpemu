@@ -4,7 +4,7 @@ int32 arm_inst_clz(cpu_state_t *st, uint32 inst)
 {
 	uint32 sbo1 = (inst >> 16) & 0x000f;
 	uint32 sbo2 = (inst >> 8) & 0x000f;
-	if (sbo1 != 1 || sbo2 != 1)
+	if (sbo1 != 0x000f || sbo2 != 0x000f)
 		return EXEC_UNPREDICTABLE;
 
 	uint32 rd = (inst >> 12) & 0x000f;

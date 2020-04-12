@@ -4,27 +4,21 @@
 #include "common/type.h"
 #include "cpu.h"
 
-typedef int32 (*arm_inst_func_t)(cpu_state_t *st, uint32 inst); //arm指令处理函数
-
-//指令函数表项
-typedef struct
-{
-	uint32 match;			  //匹配的值
-	uint32 result;			  //结果
-	arm_inst_func_t resolver; //处理函数
-} arm_inst_table_item_t;
+//检测是不是偶数
+#define even(num) ((num & 0x0001) == 0)
 
 uint32 addr_mode_2(cpu_state_t *st, uint32 inst);
+uint32 addr_mode_3(cpu_state_t *st, uint32 inst);
 bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand);
 
 int32 arm_inst_adc(cpu_state_t *st, uint32 inst);
 int32 arm_inst_add(cpu_state_t *st, uint32 inst);
 int32 arm_inst_and(cpu_state_t *st, uint32 inst);
-int32 arm_inst_b(cpu_state_t *st, uint32 inst);
+int32 arm_inst_b_bl(cpu_state_t *st, uint32 inst);
 int32 arm_inst_bic(cpu_state_t *st, uint32 inst);
-int32 arm_inst_brpt(cpu_state_t *st, uint32 inst);
 int32 arm_inst_blx_1(cpu_state_t *st, uint32 inst);
 int32 arm_inst_blx_2(cpu_state_t *st, uint32 inst);
+int32 arm_inst_brpt(cpu_state_t *st, uint32 inst);
 int32 arm_inst_bx(cpu_state_t *st, uint32 inst);
 int32 arm_inst_bxj(cpu_state_t *st, uint32 inst);
 int32 arm_inst_cdp(cpu_state_t *st, uint32 inst);
@@ -35,11 +29,135 @@ int32 arm_inst_cps(cpu_state_t *st, uint32 inst);
 int32 arm_inst_cpy(cpu_state_t *st, uint32 inst);
 int32 arm_inst_eor(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldc(cpu_state_t *st, uint32 inst);
-int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldm(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldm_2(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldm_3(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldr(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldrb(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldrbt(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldrd(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldrex(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldrh(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldrsb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldrsh(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldrt(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mcr(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mcrr(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mla(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mov(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mrc(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mrrc(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mrs(cpu_state_t *st, uint32 inst);
+int32 arm_inst_msr(cpu_state_t *st, uint32 inst);
+int32 arm_inst_msr(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mul(cpu_state_t *st, uint32 inst);
+int32 arm_inst_mvn(cpu_state_t *st, uint32 inst);
+int32 arm_inst_orr(cpu_state_t *st, uint32 inst);
+int32 arm_inst_pkhbt(cpu_state_t *st, uint32 inst);
+int32 arm_inst_pkhtb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_pld(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qadd(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qadd16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qadd8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qaddsubx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qdadd(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qdsub(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qsub(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qsub16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qsub8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_qsubaddx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_rev(cpu_state_t *st, uint32 inst);
+int32 arm_inst_rev16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_revsh(cpu_state_t *st, uint32 inst);
+int32 arm_inst_rfe(cpu_state_t *st, uint32 inst);
+int32 arm_inst_rsb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_rsc(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sadd16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sadd8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_saddsubx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sbc(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sel(cpu_state_t *st, uint32 inst);
+int32 arm_inst_setend(cpu_state_t *st, uint32 inst);
+int32 arm_inst_shadd16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_shadd8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_shaddsubx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_shsub16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_shsub8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_shsubaddx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smla_x_y(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlad(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlal(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlal_x_y(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlald(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlaw(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlsd(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlsld(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smmla(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smmls(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smmul(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smuad(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smul_x_y(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smull(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smulw_y(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smusd(cpu_state_t *st, uint32 inst);
+int32 arm_inst_srs(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ssat(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ssat16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ssub16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ssub8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ssubaddx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_stc(cpu_state_t *st, uint32 inst);
+int32 arm_inst_stm_1(cpu_state_t *st, uint32 inst);
+int32 arm_inst_stm_2(cpu_state_t *st, uint32 inst);
+int32 arm_inst_str(cpu_state_t *st, uint32 inst);
+int32 arm_inst_strb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_strbt(cpu_state_t *st, uint32 inst);
+int32 arm_inst_strd(cpu_state_t *st, uint32 inst);
+int32 arm_inst_strex(cpu_state_t *st, uint32 inst);
+int32 arm_inst_strh(cpu_state_t *st, uint32 inst);
+int32 arm_inst_strt(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sub(cpu_state_t *st, uint32 inst);
+int32 arm_inst_swi(cpu_state_t *st, uint32 inst);
+int32 arm_inst_swp(cpu_state_t *st, uint32 inst);
+int32 arm_inst_swpb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sxtab(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sxtab16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sxtah(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sxtb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sxtb16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_sxth(cpu_state_t *st, uint32 inst);
+int32 arm_inst_teq(cpu_state_t *st, uint32 inst);
+int32 arm_inst_tst(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uadd16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uadd8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uaddsubx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uhadd16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uhadd8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uhaddsubx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uhsub16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uhsub8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uhsubaddx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_umaal(cpu_state_t *st, uint32 inst);
+int32 arm_inst_umlal(cpu_state_t *st, uint32 inst);
+int32 arm_inst_umull(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uqadd16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uqadd8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uqaddsubx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uqsub16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uqsub8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uqsubaddx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usad8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usada8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usat(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usat16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usub16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usub8(cpu_state_t *st, uint32 inst);
+int32 arm_inst_usubaddx(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uxtab(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uxtab16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uxtah(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uxtb(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uxtb16(cpu_state_t *st, uint32 inst);
+int32 arm_inst_uxth(cpu_state_t *st, uint32 inst);
 
 #endif

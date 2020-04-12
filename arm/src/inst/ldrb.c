@@ -18,11 +18,18 @@ int32 arm_inst_ldrb(cpu_state_t *st, uint32 inst)
 
 	// 如果P为0， 此时如果W为0则正常访问，如果W为1则再用户模式下访问 （因为都在用户模式下，所以不用管）
 	// 如果P为1， 此时如果W为0则不更新基址寄存器，否则结果写会基址寄存器
-	uint8 byte = st->memory[addr]; //读取字节
-	uint32 data = (uint32)byte;	   //扩充到32位
 
-	st->registers[r_pc] = data;
-
+	//和ldr一样处理pc
+	if (rn == r_pc)
+	{
+		st->registers[rd] = addr + 8;
+	}
+	else
+	{
+		uint8 byte = mem_ld8(st->mem, addr); //读取字节
+		uint32 data = (uint32)byte;			 //扩充到32位
+		st->registers[rd] = data;
+	}
 	//写回
 	if (p == 1 && w == 1)
 		st->registers[rn] = addr;
