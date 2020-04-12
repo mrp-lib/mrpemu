@@ -2,6 +2,11 @@
 
 int32 arm_inst_ldr(cpu_state_t *st, uint32 inst)
 {
+	loginst("ldr", inst);
+
+	if (!cond_ok())
+		return EXEC_SUCCESS;
+
 	//TODO 先进行内存检测
 
 	//TODO CP15_reg1_Ubit只有在内核模式下才能访问，这里不处理它
@@ -16,23 +21,14 @@ int32 arm_inst_ldr(cpu_state_t *st, uint32 inst)
 	// 如果P为0， 此时如果W为0则正常访问，如果W为1则再用户模式下访问 （因为都在用户模式下，所以不用管）
 	// 如果P为1， 此时如果W为0则不更新基址寄存器，否则结果写会基址寄存器
 
-	//如果rn是pc，则直接填写地址+8即可
+	//如果rn是pc，地址+8即可
 	if (rn == r_pc)
-	{
-		st->registers[rd] = addr + 8;
-	}
+		addr += 8;
+	uint32 data = mem_ld32(st->mem, addr);
+	if (rd == r_pc)
+		st->registers[r_pc] = data & 0xfffffffc;
 	else
-	{
-		uint32 data = mem_ld32(st->mem, addr);
-		if (rd == r_pc)
-			st->registers[r_pc] = data & 0xfffffffc;
-		else
-			st->registers[rd] = data;
-	}
-
-	//写回
-	if (p == 1 && w == 1)
-		st->registers[rn] = addr;
+		st->registers[rd] = data;
 
 	return EXEC_SUCCESS;
 }

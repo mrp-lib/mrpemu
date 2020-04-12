@@ -3,6 +3,11 @@
 //adc指令
 int32 arm_inst_and(cpu_state_t *st, uint32 inst)
 {
+	loginst("and", inst);
+
+	if (!cond_ok())
+		return EXEC_SUCCESS;
+
 	//必要值
 	uint32 s = (inst >> 20) & 0x0001;
 	uint32 rn = (inst >> 16) & 0x000f;

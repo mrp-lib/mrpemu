@@ -2,6 +2,8 @@
 
 int32 arm_inst_blx_1(cpu_state_t *st, uint32 inst)
 {
+	loginst("blx(1)", inst);
+
 	uint32 h = (inst >> 24) & 0x00000001;
 	//保存地址
 	st->registers[r_lr] = st->registers[r_pc];

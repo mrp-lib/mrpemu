@@ -4,11 +4,33 @@
 #include "common/type.h"
 #include "cpu.h"
 
+//通过数字类型类型计算一个数字的位数
+#define val_bits(val) ((uint32)sizeof(val) << 3)
+
+//带符号扩展，传递值和值当前的位数
+#define sign_extend(val, val_bits) (((int32)val << (32 - val_bits)) >> (32 - val_bits))
+
+//带符号扩展，传递值和值当前的位数 (注意：如果val的位数不是8、16请调用sign_extend手动传递位数)
+#define sign_extend_e(val) (((int32)val << (32 - val_bits(val))) >> (32 - val_bits(val)))
+
 //检测是不是偶数
 #define even(num) ((num & 0x0001) == 0)
 
+//快速匹配条件是否满足
+#define cond_ok() check_cond(st, inst)
+
+//对于地址模式4，检测是否含有给定寄存器
+#define has_reg_m4(reg) ((inst >> reg) & 0b0001)
+
+//针对于ldm命令来说，用来检测rn是否等于pc
+#define ldm_rn_pc_check()                \
+	if (((inst >> 16) & 0x000f) == r_pc) \
+	return EXEC_UNPREDICTABLE
+
+bool check_cond(cpu_state_t *st, uint32 inst);
 uint32 addr_mode_2(cpu_state_t *st, uint32 inst);
 uint32 addr_mode_3(cpu_state_t *st, uint32 inst);
+void addr_mode_4(cpu_state_t *st, uint32 inst, uint32 *start_address, uint32 *end_address);
 bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand);
 
 int32 arm_inst_adc(cpu_state_t *st, uint32 inst);
@@ -29,7 +51,7 @@ int32 arm_inst_cps(cpu_state_t *st, uint32 inst);
 int32 arm_inst_cpy(cpu_state_t *st, uint32 inst);
 int32 arm_inst_eor(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldc(cpu_state_t *st, uint32 inst);
-int32 arm_inst_ldm(cpu_state_t *st, uint32 inst);
+int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldm_2(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldm_3(cpu_state_t *st, uint32 inst);
 int32 arm_inst_ldr(cpu_state_t *st, uint32 inst);

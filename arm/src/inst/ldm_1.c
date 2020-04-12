@@ -2,88 +2,39 @@
 
 int32 arm_inst_ldm_1(cpu_state_t *st, uint32 inst)
 {
-	//TODO 内存权限检测，这里暂时不处理
-	uint32 pu = (inst >> 23) & 0x00011; //P位和U位合在一起讨论
-	uint32 w = (inst >> 21) & 0x0001;
-	uint32 rn = (inst >> 16) & 0x000f;
-	uint32 regs = inst & 0x00ff;
+	loginst("ldm(1)", inst);
 
-	if (rn == 15)
-		return EXEC_UNPREDICTABLE;
+	if (!cond_ok())
+		return EXEC_SUCCESS;
 
-	//得到基地址
-	uint32 addr = (rn >> 2) << 2; //地址对齐
-	switch (pu)
+	//rn不能是pc
+	ldm_rn_pc_check();
+
+	//TODO 先进行内存检测
+
+	//计算地址
+	uint32 start_address, end_address;
+	addr_mode_4(st, inst, &start_address, &end_address);
+
+	uint32 address = start_address;
+	for (uint32 i = 0; i <= 14; i++)
 	{
-	case 0b0000: //da
-		for (uint32 i = 0; i < 14; i++)
+		if (has_reg_m4(i))
 		{
-			if ((regs >> (14 - i)) & 0x0001)
-			{
-
-				st->registers[14 - i] = mem_ld32(st->mem, addr);
-				addr -= 4;
-			}
+			st->registers[i] = mem_ld32(st->mem, address);
+			address = address + 4;
 		}
-		break;
-	case 0b0001: //ia
-		for (uint32 i = 0; i < 14; i++)
-		{
-			if ((regs >> i) & 0x0001)
-			{
-
-				st->registers[i] = mem_ld32(st->mem, addr);
-				addr += 4;
-			}
-		}
-		break;
-	case 0b0010: //db
-		for (uint32 i = 0; i < 14; i++)
-		{
-			if ((regs >> (14 - i)) & 0x0001)
-			{
-
-				addr -= 4;
-				st->registers[14 - i] = mem_ld32(st->mem, addr);
-			}
-		}
-		break;
-	case 0b0011: //ib
-		for (uint32 i = 0; i < 14; i++)
-		{
-			if ((regs >> i) & 0x0001)
-			{
-
-				st->registers[i] = mem_ld32(st->mem, addr);
-				addr += 4;
-			}
-		}
-		break;
 	}
-	//如果寄存器列表有R15(pc)
-	if (regs >> 15)
+	if (has_reg_m4(r_pc))
 	{
-		//取内存值
-		if (pu == 0b0010)
-			addr -= 4;
-		else if (pu == 0b0011)
-			addr += 4;
-		uint32 value = mem_ld32(st->mem, addr);
-		if (pu == 0b0000)
-			addr -= 4;
-		else if (pu == 0b0001)
-			addr += 4;
+		uint32 value = mem_ld32(st->mem, address);
 		//对值进行处理
-		//不适用这种方式
+		//不使用这种方式
 		// st->registers[r_pc] = value & 0xFFFFFFFE;
 		// st->t = value & 0x0001;
 		//否则呢
 		st->registers[r_pc] = value & 0xFFFFFFFC;
 	}
-	//回写
-	if (w == 1)
-		st->registers[rn] = addr;
 
-	//完成
 	return EXEC_SUCCESS;
 }

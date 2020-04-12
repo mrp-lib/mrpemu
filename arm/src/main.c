@@ -5,6 +5,15 @@
 
 int main()
 {
+
+	uint16 testv = 0x8000;
+	println("testv = %d", testv);
+	int32 stestv = (int32)testv;
+	println("stestv = %d", stestv);
+	println("stestv = %d", stestv << 16);
+	println("stestv = %d", (stestv << 16) >> 16);
+	println("sextend = %d", sign_extend_e(testv));
+
 	println("--------------------->");
 	//打开测试用到的elf文件
 	elf_head_t head;

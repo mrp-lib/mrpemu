@@ -5,46 +5,6 @@
 
 #define call_inst(ins_name) arm_inst_##ins_name(st, inst)
 
-bool cond_val(cpu_state_t *st, uint32 cond)
-{
-	//条件检测
-	switch (cond)
-	{
-	case 0x00000000: //eq
-		return st->z;
-	case 0x00000001: //ne
-		return !st->z;
-	case 0x00000002: //cs/hs
-		return st->c;
-	case 0x00000003: //cc/lo
-		return !st->c;
-	case 0x00000004: //mi
-		return st->n;
-	case 0x00000005: //pl
-		return !st->n;
-	case 0x00000006: //vs
-		return st->v;
-	case 0x00000007: //vc
-		return !st->v;
-	case 0x00000008: //hi
-		return st->c && !st->z;
-	case 0x00000009: //ls
-		return !st->c && st->z;
-	case 0x0000000a: //ge
-		return st->n == st->v;
-	case 0x0000000b: //lt
-		return st->n != st->v;
-	case 0x0000000c: //gt
-		return st->z == 0 && st->n == st->v;
-	case 0x0000000d: //le
-		return st->z == 1 || st->n != st->v;
-	case 0x0000000e:
-		return true;
-	default:
-		return false;
-	}
-}
-
 //创建CPU
 cpu_state_t *cpu_create(memory_t *mem)
 {
@@ -144,60 +104,64 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 			uint32 sub_idcode = (inst >> 4) & 0b1111; //子识别码
 			uint32 opcode = (inst >> 21) & 0b1111;	  //操作码
 			uint32 s = (inst >> 20) & 0b0001;
-			//1001
-			if (sub_idcode == 0b1001)
+			//只有000才会是1xx1
+			if (idcode == 0b0000 && (sub_idcode & 0b1001) == 0b1001)
 			{
-				if (opcode == 0b0000) //mul
-					return call_inst(mul);
-				else if (opcode == 0b0001) //mla
-					return call_inst(mla);
-				else if (opcode == 0b0010) //umaal
-					return call_inst(umaal);
-				else if (opcode == 0b0100) //umull
-					return call_inst(umull);
-				else if (opcode == 0b0101) //umlal
-					return call_inst(umlal);
-				else if (opcode == 0b0110) //smull
-					return call_inst(smull);
-				else if (opcode == 0b0111) //smlal
-					return call_inst(smlal);
-				else if (opcode == 0b1000) //swp
-					return call_inst(swp);
-				else if (opcode == 0b1010) //swpb
-					return call_inst(swpb);
-				else if (opcode == 0b1100)
+				//1001
+				if (sub_idcode == 0b1001)
 				{
-					if (s == 1) //ldrex
-						return call_inst(ldrex);
-					else //strex
-						return call_inst(strex);
+					if (opcode == 0b0000) //mul
+						return call_inst(mul);
+					else if (opcode == 0b0001) //mla
+						return call_inst(mla);
+					else if (opcode == 0b0010) //umaal
+						return call_inst(umaal);
+					else if (opcode == 0b0100) //umull
+						return call_inst(umull);
+					else if (opcode == 0b0101) //umlal
+						return call_inst(umlal);
+					else if (opcode == 0b0110) //smull
+						return call_inst(smull);
+					else if (opcode == 0b0111) //smlal
+						return call_inst(smlal);
+					else if (opcode == 0b1000) //swp
+						return call_inst(swp);
+					else if (opcode == 0b1010) //swpb
+						return call_inst(swpb);
+					else if (opcode == 0b1100)
+					{
+						if (s == 1) //ldrex
+							return call_inst(ldrex);
+						else //strex
+							return call_inst(strex);
+					}
+					else //undefined
+						return EXEC_UNPREDICTABLE;
 				}
-				else //undefined
-					return EXEC_UNPREDICTABLE;
-			}
-			//1011
-			else if (sub_idcode == 0b1011)
-			{
-				if (s == 1) //ldrh
-					return call_inst(ldrh);
-				else //strh
-					return call_inst(strh);
-			}
-			//1101
-			else if (sub_idcode == 0b1101)
-			{
-				if (s == 1) //ldrsb
-					return call_inst(ldrsb);
-				else //ldrd
-					return call_inst(ldrd);
-			}
-			//1111
-			else if (sub_idcode == 0b1111)
-			{
-				if (s == 1) //ldrsh
-					return call_inst(ldrsh);
-				else //strd
-					return call_inst(strd);
+				//1011
+				else if (sub_idcode == 0b1011)
+				{
+					if (s == 1) //ldrh
+						return call_inst(ldrh);
+					else //strh
+						return call_inst(strh);
+				}
+				//1101
+				else if (sub_idcode == 0b1101)
+				{
+					if (s == 1) //ldrsb
+						return call_inst(ldrsb);
+					else //ldrd
+						return call_inst(ldrd);
+				}
+				//1111
+				else if (sub_idcode == 0b1111)
+				{
+					if (s == 1) //ldrsh
+						return call_inst(ldrsh);
+					else //strd
+						return call_inst(strd);
+				}
 			}
 			//op=10xx s=0
 			else if (s == 0 && (opcode & 0b1100) == 0b1000)
@@ -288,10 +252,13 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 				case 0b1100: //orr
 					return call_inst(orr);
 				case 0b1101:
-					if (s == 0 && (inst & 0x00000ff0) == 0x00000000) //cpy
+				{
+					uint32 i = (inst >> 25) & 0b0001;
+					if (s == 0 && i == 0) //cpy
 						return call_inst(cpy);
 					else //mov
 						return call_inst(mov);
+				}
 				case 0b1110: //bic
 					return call_inst(bic);
 				case 0b1111: //mvn
@@ -640,8 +607,8 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 			}
 			else
 			{
-				if (s == 0) //ldm
-					return call_inst(ldm);
+				if (s == 0) //ldm(1)
+					return call_inst(ldm_1);
 				else
 				{
 					uint32 b15 = (inst >> 15) & 0b0001;
@@ -654,7 +621,7 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 		}
 		else if (idcode == 0b0101) //b,bl
 			return call_inst(b_bl);
-		else if (idcode == 0b110)
+		else if (idcode == 0b0110)
 		{
 			uint32 l = (inst >> 20) & 0b0001;
 			uint32 opcode = (inst >> 21) & 0b1111;

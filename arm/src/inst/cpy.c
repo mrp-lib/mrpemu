@@ -2,6 +2,11 @@
 
 int32 arm_inst_cpy(cpu_state_t *st, uint32 inst)
 {
+	loginst("cpy", inst);
+
+	if (!cond_ok())
+		return EXEC_SUCCESS;
+
 	uint32 sbz = (inst >> 16) & 0x000f;
 	if (sbz != 0)
 		return EXEC_UNPREDICTABLE;

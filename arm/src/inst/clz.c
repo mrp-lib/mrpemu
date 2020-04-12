@@ -2,6 +2,11 @@
 
 int32 arm_inst_clz(cpu_state_t *st, uint32 inst)
 {
+	loginst("clz", inst);
+
+	if (!cond_ok())
+		return EXEC_SUCCESS;
+
 	uint32 sbo1 = (inst >> 16) & 0x000f;
 	uint32 sbo2 = (inst >> 8) & 0x000f;
 	if (sbo1 != 0x000f || sbo2 != 0x000f)

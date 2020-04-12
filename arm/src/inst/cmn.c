@@ -2,6 +2,11 @@
 
 int32 arm_inst_cmn(cpu_state_t *st, uint32 inst)
 {
+	loginst("cmn", inst);
+
+	if (!cond_ok())
+		return EXEC_SUCCESS;
+
 	uint32 sbz = (inst >> 12) & 0x000f;
 	if (sbz != 0)
 		return EXEC_UNPREDICTABLE;
