@@ -8,7 +8,7 @@
 			"name": "C++ Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceRoot}/mrp",
+			"program": "${workspaceRoot}/bin/arm",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceRoot}",
