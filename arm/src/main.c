@@ -5,15 +5,6 @@
 
 int main()
 {
-
-	uint16 testv = 0x8000;
-	println("testv = %d", testv);
-	int32 stestv = (int32)testv;
-	println("stestv = %d", stestv);
-	println("stestv = %d", stestv << 16);
-	println("stestv = %d", (stestv << 16) >> 16);
-	println("sextend = %d", sign_extend_e(testv));
-
 	println("--------------------->");
 	//打开测试用到的elf文件
 	elf_head_t head;
@@ -30,8 +21,6 @@ int main()
 		elf_print_sec_head(elf, &head, secs, i, i == 0);
 	}
 
-	println("--------------------->");
-
 	uint32 mem_size = 1024 * 1024 * 10; //10m内存
 
 	memory_t *mem = mem_create(mem_size);
@@ -45,6 +34,7 @@ int main()
 		mem_st32(mem, i * 4, i + 1);
 	}
 	//加载段
+	println("正在加载程序");
 	for (uint32 i = 0; i < head.e_shnum; i++)
 	{
 		elf_sec_head_t *sh = secs + i;
@@ -56,10 +46,12 @@ int main()
 		fseek(elf->fp, sh->sh_offset, SEEK_SET);
 		uint8 *pos = mem->buffer + sh->sh_addr;
 		fread(pos, 1, sh->sh_size, elf->fp);
-		logi("段加载：%d", i);
 	}
 
 	st->registers[r_pc] = head.e_entry;
+	psr_stval(&st->cpsr, 0x000000d3); //cpsr默认为d3
+
+	println("--------------------->");
 
 	st->registers[1] = 8;
 	// st->registers[2] = 0x00e0;

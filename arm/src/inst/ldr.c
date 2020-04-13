@@ -13,10 +13,10 @@ int32 arm_inst_ldr(cpu_state_t *st, uint32 inst)
 
 	//得到地址
 	uint32 addr = addr_mode_2(st, inst);
-	uint32 rn = (inst >> 16) & 0x000f;
-	uint32 rd = (inst >> 12) & 0x000f;
-	uint32 p = (inst >> 24) & 0x0001;
-	uint32 w = (inst >> 21) & 0x0001;
+	uint32 rn = inst_b4(16);
+	uint32 rd = inst_b4(12);
+	uint32 p = inst_b1(24);
+	uint32 w = inst_b1(21);
 
 	// 如果P为0， 此时如果W为0则正常访问，如果W为1则再用户模式下访问 （因为都在用户模式下，所以不用管）
 	// 如果P为1， 此时如果W为0则不更新基址寄存器，否则结果写会基址寄存器

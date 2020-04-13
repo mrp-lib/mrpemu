@@ -9,9 +9,9 @@ int32 arm_inst_bic(cpu_state_t *st, uint32 inst)
 		return EXEC_SUCCESS;
 
 	//必要值
-	uint32 s = (inst >> 20) & 0x0001;
-	uint32 rn = (inst >> 16) & 0x000f;
-	uint32 rd = (inst >> 12) & 0x000f;
+	uint32 s = inst_b1(20);
+	uint32 rn = inst_b4(16);
+	uint32 rd = inst_b4(12);
 	uint32 operand;
 	bool carry = shifter_operand(st, inst, &operand);
 	//计算
@@ -22,9 +22,9 @@ int32 arm_inst_bic(cpu_state_t *st, uint32 inst)
 	}
 	else if (s == 1)
 	{
-		st->n = result >> 31;
-		st->z = result == 0;
-		st->c = carry;
+		st->cpsr.n = result >> 31;
+		st->cpsr.z = result == 0;
+		st->cpsr.c = carry;
 	}
 	return EXEC_SUCCESS;
 }

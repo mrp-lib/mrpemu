@@ -55,12 +55,12 @@ void cpu_print_regs(cpu_state_t *st)
 	}
 	//打印cspr
 	printf(" CSPR=");
-	printf(st->n ? "N" : "n");
-	printf(st->z ? "Z" : "z");
-	printf(st->c ? "C" : "c");
-	printf(st->v ? "V" : "v");
+	printf(st->cpsr.n ? "N" : "n");
+	printf(st->cpsr.z ? "Z" : "z");
+	printf(st->cpsr.c ? "C" : "c");
+	printf(st->cpsr.v ? "V" : "v");
 	printf("_");
-	printf(st->t ? "T" : "t");
+	printf(st->cpsr.t ? "T" : "t");
 	printf("\n");
 }
 
@@ -70,10 +70,10 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 	//无条件语句
 	if ((inst & 0xf0000000) == 0xf0000000)
 	{
-		uint32 opcode = (inst >> 26) & 0b0011;
+		uint32 opcode = inst_bm(26, 27);
 		if (opcode == 0b0000)
 		{
-			uint32 b16 = (inst >> 16) & 0b0001;
+			uint32 b16 = inst_b1(16);
 			if (b16 == 0) //cps
 				return call_inst(cps);
 			else //setend
@@ -83,10 +83,10 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 			return call_inst(pld);
 		else if (opcode == 0b0010)
 		{
-			uint32 b25 = (inst >> 25) & 0b0001;
+			uint32 b25 = inst_b1(25);
 			if (b25 == 0)
 			{
-				uint32 b22 = (inst >> 22) & 0b0001;
+				uint32 b22 = inst_b1(22);
 				if (b22 == 0) //rfe
 					return call_inst(rfe);
 				else //srs
@@ -98,12 +98,12 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 	}
 	else
 	{
-		uint32 idcode = (inst >> 25) & 0b0111;	  //识别码
+		uint32 idcode = inst_bm(25, 27);		  //识别码
 		if (idcode == 0b0000 || idcode == 0b0001) //000或001
 		{
-			uint32 sub_idcode = (inst >> 4) & 0b1111; //子识别码
-			uint32 opcode = (inst >> 21) & 0b1111;	  //操作码
-			uint32 s = (inst >> 20) & 0b0001;
+			uint32 sub_idcode = inst_b4(4); //子识别码
+			uint32 opcode = inst_b4(21);	//操作码
+			uint32 s = inst_b1(20);
 			//只有000才会是1xx1
 			if (idcode == 0b0000 && (sub_idcode & 0b1001) == 0b1001)
 			{
@@ -180,8 +180,13 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 					if (sub_idcode == 0b0010) //bxj
 						return call_inst(bxj);
 					//下面对opxx也只有4种情况
-					else if (opxx == 0b0000) //smla<x><y>
-						return call_inst(smla_x_y);
+					else if (opxx == 0b0000)
+					{
+						if (sub_idcode == 0b0000) //msr
+							return call_inst(mrs);
+						else //smla<x><y>
+							return call_inst(smla_x_y);
+					}
 					else if (opxx == 0b0001)
 					{
 						if ((sub_idcode & 0b0010) == 0b0000) //smlaw
@@ -253,7 +258,7 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 					return call_inst(orr);
 				case 0b1101:
 				{
-					uint32 i = (inst >> 25) & 0b0001;
+					uint32 i = inst_b1(25);
 					if (s == 0 && i == 0) //cpy
 						return call_inst(cpy);
 					else //mov
@@ -268,19 +273,18 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 		}
 		else if (idcode == 0b0010 || idcode == 0b0011) //010或011
 		{
-			uint32 b24 = (inst >> 21) & 0b0001;		  //第24位
-			uint32 sub_idcode = (inst >> 4) & 0b1111; //子识别码
-			uint32 opcode = (inst >> 21) & 0b1111;	  //操作码
-			uint32 l = (inst >> 20) & 0b0001;
-			uint32 r16 = (inst >> 16) & 0x000f; //第16-19，可能是rn或rd
-			uint32 r12 = (inst >> 12) & 0x000f; //第12-15，可能是rn或rd
+			uint32 sub_idcode = inst_b4(4); //子识别码
+			uint32 opcode = inst_b4(21);	//操作码
+			uint32 l = inst_b1(20);
+			uint32 r16 = inst_b4(16); //第16-19，可能是rn或rd
+			uint32 r12 = inst_b4(12); //第12-15，可能是rn或rd
 
 			//如果识别码是010 或 子识别码是xxx0表示数据加载存储指令
 			if (idcode == 0b0010 || (sub_idcode & 0b0001) == 0b0000)
 			{
-				uint32 p = (inst >> 24) & 0b0001;
-				uint32 b = (inst >> 22) & 0b0001;
-				uint32 w = (inst >> 21) & 0b0001;
+				uint32 p = inst_b1(24);
+				uint32 b = inst_b1(22);
+				uint32 w = inst_b1(21);
 				if (l == 0)
 				{
 					if (b == 0)
@@ -596,8 +600,8 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 		}
 		else if (idcode == 0b0100)
 		{
-			uint32 s = (inst >> 22) & 0b0001;
-			uint32 l = (inst >> 20) & 0b0001;
+			uint32 s = inst_b1(22);
+			uint32 l = inst_b1(20);
 			if (l == 0)
 			{
 				if (s == 0) //stm(1)
@@ -611,7 +615,7 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 					return call_inst(ldm_1);
 				else
 				{
-					uint32 b15 = (inst >> 15) & 0b0001;
+					uint32 b15 = inst_b1(15);
 					if (b15 == 0) //ldm(2)
 						return call_inst(ldm_2);
 					else //ldm(3)
@@ -623,8 +627,8 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 			return call_inst(b_bl);
 		else if (idcode == 0b0110)
 		{
-			uint32 l = (inst >> 20) & 0b0001;
-			uint32 opcode = (inst >> 21) & 0b1111;
+			uint32 l = inst_b1(20);
+			uint32 opcode = inst_b4(21);
 			if (l == 0)
 			{
 				if (opcode == 0b0010) //mcrr
@@ -642,15 +646,15 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 		}
 		else if (idcode == 0b0111)
 		{
-			uint32 b24 = (inst >> 24) & 0b0001;
+			uint32 b24 = inst_b1(24);
 			if (b24 == 0)
 			{
-				uint32 b4 = (inst >> 4) & 0b0001;
+				uint32 b4 = inst_b1(4);
 				if (b4 == 0) //cdp
 					return call_inst(cdp);
 				else
 				{
-					uint32 l = (inst >> 20) & 0b0001;
+					uint32 l = inst_b1(20);
 					if (l == 0) //mcr
 						return call_inst(mcr);
 					else //mrc
@@ -663,200 +667,237 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 	}
 }
 
+//取得psr寄存器的值
+uint32 psr_ldval(cpu_psr_t *psr)
+{
+	uint32 value = 0;
+	value |= (psr->n << 31);
+	value |= (psr->z << 30);
+	value |= (psr->c << 29);
+	value |= (psr->v << 28);
+	value |= (psr->q << 27);
+	value |= (psr->j << 24);
+	value |= ((psr->ge & 0x0f) << 16);
+	value |= (psr->e << 9);
+	value |= (psr->a << 8);
+	value |= (psr->i << 7);
+	value |= (psr->f << 6);
+	value |= (psr->t << 5);
+	value |= (psr->mode & 0x1f);
+	return value;
+}
+
+//设置psr寄存器的值
+uint32 psr_stval(cpu_psr_t *psr, uint32 val)
+{
+	psr->n = bit1(val, 31);
+	psr->z = bit1(val, 30);
+	psr->c = bit1(val, 29);
+	psr->v = bit1(val, 28);
+	psr->q = bit1(val, 27);
+	psr->j = bit1(val, 24);
+	psr->ge = bitm(val, 16, 19);
+	psr->e = bit1(val, 9);
+	psr->a = bit1(val, 8);
+	psr->i = bit1(val, 7);
+	psr->f = bit1(val, 6);
+	psr->t = bit1(val, 5);
+	psr->mode = bitm(val, 0, 4);
+	return val;
+}
+
 /*
-指令整理：
+	指令整理：
 
-000,001:
-	子识别码=1001
-			mul				cond 0 0 0 0 0 0 0 S Rd SBZ Rs 1 0 0 1 Rm
-			mla				cond 0 0 0 0 0 0 1 S Rd Rn Rs 1 0 0 1 Rm
-			umaal			cond 0 0 0 0 0 1 0 0 RdHi RdLo Rs 1 0 0 1 Rm
-			umull			cond 0 0 0 0 1 0 0 S RdHi RdLo Rs 1 0 0 1 Rm
-			umlal			cond 0 0 0 0 1 0 1 S RdHi RdLo Rs 1 0 0 1 Rm
-			smull			cond 0 0 0 0 1 1 0 S RdHi RdLo Rs 1 0 0 1 Rm
-			smlal			cond 0 0 0 0 1 1 1 S RdHi RdLo Rs 1 0 0 1 Rm
-			swp				cond 0 0 0 1 0 0 0 0 Rn Rd SBZ 1 0 0 1 Rm
-			swpb			cond 0 0 0 1 0 1 0 0 Rn Rd SBZ 1 0 0 1 Rm
-			strex			cond 0 0 0 1 1 0 0 0 Rn Rd SBO 1 0 0 1 Rm
-			ldrex			cond 0 0 0 1 1 0 0 1 Rn Rd SBO 1 0 0 1 SBO
-	子识别码=1011
-			ldrh			cond 0 0 0 P U I W 1 Rn Rd addr_mode 1 0 1 1 addr_mode
-			strh			cond 0 0 0 P U I W 0 Rn Rd addr_mode 1 0 1 1 addr_mode
-	子识别码=1101
-			ldrsb			cond 0 0 0 P U I W 1 Rn Rd addr_mode 1 1 0 1 addr_mode
-			ldrd			cond 0 0 0 P U I W 0 Rn Rd addr_mode 1 1 0 1 addr_mode
-	子识别码=1111
-			ldrsh			cond 0 0 0 P U I W 1 Rn Rd addr_mode 1 1 1 1 addr_mode
-			strd			cond 0 0 0 P U I W 0 Rn Rd addr_mode 1 1 1 1 addr_mode
-	;
-	
-			msr				cond 0 0 1 1 0 R 1 0 field_mask SBO rotate_imm 8_bit_immediate
-			mrs				cond 0 0 0 1 0 R 0 0 SBO Rd SBZ
-			msr				cond 0 0 0 1 0 R 1 0 field_mask SBO SBZ 0 0 0 0 Rm
+	000,001:
+		子识别码=1001
+				mul				cond 0 0 0 0 0 0 0 S Rd SBZ Rs 1 0 0 1 Rm
+				mla				cond 0 0 0 0 0 0 1 S Rd Rn Rs 1 0 0 1 Rm
+				umaal			cond 0 0 0 0 0 1 0 0 RdHi RdLo Rs 1 0 0 1 Rm
+				umull			cond 0 0 0 0 1 0 0 S RdHi RdLo Rs 1 0 0 1 Rm
+				umlal			cond 0 0 0 0 1 0 1 S RdHi RdLo Rs 1 0 0 1 Rm
+				smull			cond 0 0 0 0 1 1 0 S RdHi RdLo Rs 1 0 0 1 Rm
+				smlal			cond 0 0 0 0 1 1 1 S RdHi RdLo Rs 1 0 0 1 Rm
+				swp				cond 0 0 0 1 0 0 0 0 Rn Rd SBZ 1 0 0 1 Rm
+				swpb			cond 0 0 0 1 0 1 0 0 Rn Rd SBZ 1 0 0 1 Rm
+				strex			cond 0 0 0 1 1 0 0 0 Rn Rd SBO 1 0 0 1 Rm
+				ldrex			cond 0 0 0 1 1 0 0 1 Rn Rd SBO 1 0 0 1 SBO
+		子识别码=1011
+				ldrh			cond 0 0 0 P U I W 1 Rn Rd addr_mode 1 0 1 1 addr_mode
+				strh			cond 0 0 0 P U I W 0 Rn Rd addr_mode 1 0 1 1 addr_mode
+		子识别码=1101
+				ldrsb			cond 0 0 0 P U I W 1 Rn Rd addr_mode 1 1 0 1 addr_mode
+				ldrd			cond 0 0 0 P U I W 0 Rn Rd addr_mode 1 1 0 1 addr_mode
+		子识别码=1111
+				ldrsh			cond 0 0 0 P U I W 1 Rn Rd addr_mode 1 1 1 1 addr_mode
+				strd			cond 0 0 0 P U I W 0 Rn Rd addr_mode 1 1 1 1 addr_mode
+		;
+		
+				msr				cond 0 0 1 1 0 R 1 0 field_mask SBO rotate_imm 8_bit_immediate
+				mrs				cond 0 0 0 1 0 R 0 0 SBO Rd SBZ
+				msr				cond 0 0 0 1 0 R 1 0 field_mask SBO SBZ 0 0 0 0 Rm
 
-			bx				cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 0 1 Rm
-			clz				cond 0 0 0 1 0 1 1 0 SBO Rd SBO 0 0 0 1 Rm
-			blx(2)			cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 1 1 Rm
-			qadd			cond 0 0 0 1 0 0 0 0 Rn Rd SBZ 0 1 0 1 Rm
-			qsub			cond 0 0 0 1 0 0 1 0 Rn Rd SBZ 0 1 0 1 Rm
-			qdadd			cond 0 0 0 1 0 1 0 0 Rn Rd SBZ 0 1 0 1 Rm
-			qdsub			cond 0 0 0 1 0 1 1 0 Rn Rd SBZ 0 1 0 1 Rm
-			brpt			cond 0 0 0 1 0 0 1 0 immed 0 1 1 1 immed (cond = 1110)
+				bx				cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 0 1 Rm
+				clz				cond 0 0 0 1 0 1 1 0 SBO Rd SBO 0 0 0 1 Rm
+				blx(2)			cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 1 1 Rm
+				qadd			cond 0 0 0 1 0 0 0 0 Rn Rd SBZ 0 1 0 1 Rm
+				qsub			cond 0 0 0 1 0 0 1 0 Rn Rd SBZ 0 1 0 1 Rm
+				qdadd			cond 0 0 0 1 0 1 0 0 Rn Rd SBZ 0 1 0 1 Rm
+				qdsub			cond 0 0 0 1 0 1 1 0 Rn Rd SBZ 0 1 0 1 Rm
+				brpt			cond 0 0 0 1 0 0 1 0 immed 0 1 1 1 immed (cond = 1110)
 
-			bxj				cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 1 0 Rm
-			smla<x><y>		cond 0 0 0 1 0 0 0 0 Rd Rn Rs 1 y x 0 Rm
-			smlaw			cond 0 0 0 1 0 0 1 0 Rd Rn Rs 1 y 0 0 Rm
-			smulw<y>		cond 0 0 0 1 0 0 1 0 Rd SBZ Rs 1 y 1 0 Rm
-			smlal<x><y>		cond 0 0 0 1 0 1 0 0 RdHi RdLo Rs 1 y x 0 Rm
-			smul<x><y>		cond 0 0 0 1 0 1 1 0 Rd SBZ Rs 1 y x 0 Rm
+				bxj				cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 1 0 Rm
+				smla<x><y>		cond 0 0 0 1 0 0 0 0 Rd Rn Rs 1 y x 0 Rm
+				smlaw			cond 0 0 0 1 0 0 1 0 Rd Rn Rs 1 y 0 0 Rm
+				smulw<y>		cond 0 0 0 1 0 0 1 0 Rd SBZ Rs 1 y 1 0 Rm
+				smlal<x><y>		cond 0 0 0 1 0 1 0 0 RdHi RdLo Rs 1 y x 0 Rm
+				smul<x><y>		cond 0 0 0 1 0 1 1 0 Rd SBZ Rs 1 y x 0 Rm
 
-			and				cond 0 0 I 0 0 0 0 S Rn Rd shifter_operand
-			eor				cond 0 0 I 0 0 0 1 S Rn Rd shifter_operand
-			sub				cond 0 0 I 0 0 1 0 S Rn Rd shifter_operand
-			rsb				cond 0 0 I 0 0 1 1 S Rn Rd shifter_operand
-			add				cond 0 0 I 0 1 0 0 S Rn Rd shifter operand
-			adc				cond 0 0 I 0 1 0 1 S Rn Rd shifter_operand
-			sbc				cond 0 0 I 0 1 1 0 S Rn Rd shifter_operand
-			rsc				cond 0 0 I 0 1 1 1 S Rn Rd shifter_operand
-			tst				cond 0 0 I 1 0 0 0 1 Rn SBZ shifter_operand
-			teq				cond 0 0 I 1 0 0 1 1 Rn SBZ shifter_operand
-			cmp				cond 0 0 I 1 0 1 0 1 Rn SBZ shifter_operand
-			cmn				cond 0 0 I 1 0 1 1 1 Rn SBZ shifter_operand
-			orr				cond 0 0 I 1 1 0 0 S Rn Rd shifter_operand
-			mov				cond 0 0 I 1 1 0 1 S SBZ Rd shifter_operand
-			cpy				cond 0 0 0 1 1 0 1 0 SBZ Rd 0 0 0 0 0 0 0 0 Rm
-			bic				cond 0 0 I 1 1 1 0 S Rn Rd shifter_operand
-			mvn				cond 0 0 I 1 1 1 1 S SBZ Rd shifter_operand
-	;
+				and				cond 0 0 I 0 0 0 0 S Rn Rd shifter_operand
+				eor				cond 0 0 I 0 0 0 1 S Rn Rd shifter_operand
+				sub				cond 0 0 I 0 0 1 0 S Rn Rd shifter_operand
+				rsb				cond 0 0 I 0 0 1 1 S Rn Rd shifter_operand
+				add				cond 0 0 I 0 1 0 0 S Rn Rd shifter operand
+				adc				cond 0 0 I 0 1 0 1 S Rn Rd shifter_operand
+				sbc				cond 0 0 I 0 1 1 0 S Rn Rd shifter_operand
+				rsc				cond 0 0 I 0 1 1 1 S Rn Rd shifter_operand
+				tst				cond 0 0 I 1 0 0 0 1 Rn SBZ shifter_operand
+				teq				cond 0 0 I 1 0 0 1 1 Rn SBZ shifter_operand
+				cmp				cond 0 0 I 1 0 1 0 1 Rn SBZ shifter_operand
+				cmn				cond 0 0 I 1 0 1 1 1 Rn SBZ shifter_operand
+				orr				cond 0 0 I 1 1 0 0 S Rn Rd shifter_operand
+				mov				cond 0 0 I 1 1 0 1 S SBZ Rd shifter_operand
+				cpy				cond 0 0 0 1 1 0 1 0 SBZ Rd 0 0 0 0 0 0 0 0 Rm
+				bic				cond 0 0 I 1 1 1 0 S Rn Rd shifter_operand
+				mvn				cond 0 0 I 1 1 1 1 S SBZ Rd shifter_operand
+		;
 
-010,011
-	识别码=011
-		B[24-20] = 11111, B[7-4]=1111
-			未定义
-		B[24]=0, 子识别码=0001
-			sadd16			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 0 0 1 Rm
-			qadd16			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 0 0 1 Rm
-			shadd16			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 0 0 1 Rm
-			uadd16			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 0 0 1 Rm
-			uqadd16			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 0 0 1 Rm
-			uhadd16			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 0 0 1 Rm
-			usada8			cond 0 1 1 1 1 0 0 0 Rd Rn Rs 0 0 0 1 Rm
-			usad8			cond 0 1 1 1 1 0 0 0 Rd 1 1 1 1 Rs 0 0 0 1 Rm
-		B[24]=0, 子识别码=0011
-			saddsubx		cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 0 1 1 Rm
-			qaddsubx		cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 0 1 1 Rm
-			shaddsubx		cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 0 1 1 Rm
-			uaddsubx		cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 0 1 1 Rm
-			uqaddsubx		cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 0 1 1 Rm
-			uhaddsubx		cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 0 1 1 Rm
-			ssat16			cond 0 1 1 0 1 0 1 0 sat_imm Rd SBO 0 0 1 1 Rm
-			rev				cond 0 1 1 0 1 0 1 1 SBO Rd SBO 0 0 1 1 Rm
-			usat16			cond 0 1 1 0 1 1 1 0 sat_imm Rd SBO 0 0 1 1 Rm
-		B[24]=0, 子识别码=0101
-			ssubaddx		cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 1 0 1 Rm
-			qsubaddx		cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 1 0 1 Rm
-			shsubaddx		cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 1 0 1 Rm
-			usubaddx		cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 1 0 1 Rm
-			uqsubaddx		cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 1 0 1 Rm
-			uhsubaddx		cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 1 0 1 Rm
-		B[24]=0, 子识别码=0111
-			ssub16			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 1 1 1 Rm
-			qsub16			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 1 1 1 Rm
-			shsub16			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 1 1 1 Rm
-			usub16			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 1 1 1 Rm
-			uqsub16			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 1 1 1 Rm
-			uhsub16			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 1 1 1 Rm
-			sxtab16			cond 0 1 1 0 1 0 0 0 Rn Rd rotate SBZ 0 1 1 1 Rm
-			sxtb16			cond 0 1 1 0 1 0 0 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
-			sxtab			cond 0 1 1 0 1 0 1 0 Rn Rd rotate SBZ 0 1 1 1 Rm
-			sxtb			cond 0 1 1 0 1 0 1 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
-			sxtah			cond 0 1 1 0 1 0 1 1 Rn Rd rotate SBZ 0 1 1 1 Rm
-			sxth			cond 0 1 1 0 1 0 1 1 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
-			uxtab16			cond 0 1 1 0 1 1 0 0 Rn Rd rotate SBZ 0 1 1 1 Rm
-			uxtb16			cond 0 1 1 0 1 1 0 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
-			uxtab			cond 0 1 1 0 1 1 1 0 Rn Rd rotate SBZ 0 1 1 1 Rm
-			uxtb			cond 0 1 1 0 1 1 1 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
-			uxtah			cond 0 1 1 0 1 1 1 1 Rn Rd rotate SBZ 0 1 1 1 Rm
-			uxth			cond 0 1 1 0 1 1 1 1 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
-		B[24]=0, 子识别码=1001
-			sadd8			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 1 0 0 1 Rm
-			qadd8			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 1 0 0 1 Rm
-			shadd8			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 1 0 0 1 Rm
-			uadd8			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 1 0 0 1 Rm
-			uqadd8			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 1 0 0 1 Rm
-			uhadd8			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 1 0 0 1 Rm
-		B[24]=0, 子识别码=1011
-			sel				cond 0 1 1 0 1 0 0 0 Rn Rd SBO 1 0 1 1 Rm
-			rev16			cond 0 1 1 0 1 0 1 1 SBO Rd SBO 1 0 1 1 Rm
-			revsh			cond 0 1 1 0 1 1 1 1 SBO Rd SBO 1 0 1 1 Rm
-		B[24]=0, 子识别码=1111
-			ssub8			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 1 1 1 1 Rm
-			qsub8			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 1 1 1 1 Rm
-			shsub8			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 1 1 1 1 Rm
-			usub8			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 1 1 1 1 Rm
-			uqsub8			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 1 1 1 1 Rm
-			uhsub8			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 1 1 1 1 Rm
-		B[24]=0, 子识别码归纳到上面去(属于上面的情况)
-			pkhbt			cond 0 1 1 0 1 0 0 0 Rn Rd shift_imm 0 0 1 Rm			0001 1001
-			pkhtb			cond 0 1 1 0 1 0 0 0 Rn Rd shift_imm 1 0 1 Rm			0101 1101
-			ssat			cond 0 1 1 0 1 0 1 sat_imm Rd shift_imm sh 0 1 Rm		0001 0101 1001 1101
-			usat			cond 0 1 1 0 1 1 1 sat_imm Rd shift_imm sh 0 1 Rm		0001 0101 1001 1101
-		B[24]=1，子识别码=xxx1
-			smlad			cond 0 1 1 1 0 0 0 0 Rd Rn Rs 0 0 X 1 Rm				0001 0011
-			smuad			cond 0 1 1 1 0 0 0 0 Rd 1 1 1 1 Rs 0 0 X 1 Rm			0001 0011
-			smlsd			cond 0 1 1 1 0 0 0 0 Rd Rn Rs 0 1 X 1 Rm				0101 0111
-			smusd		`	cond 0 1 1 1 0 0 0 0 Rd 1 1 1 1 Rs 0 1 X 1 Rm			0101 0111
-			smlald			cond 0 1 1 1 0 1 0 0 RdHi RdLo Rs 0 0 X 1 Rm			0001 0011
-			smlsld			cond 0 1 1 1 0 1 0 0 RdHi RdLo Rs 0 1 X 1 Rm			0101 0111
-			smmla			cond 0 1 1 1 0 1 0 1 Rd Rn Rs 0 0 R 1 Rm				0001 0011
-			smmls			cond 0 1 1 1 0 1 0 1 Rd Rn Rs 1 1 R 1 Rm				1101 1111
-			smmul			cond 0 1 1 1 0 1 0 1 Rd 1 1 1 1 Rs 0 0 R 1 Rm			0001 0011
+	010,011
+		识别码=011
+			B[24-20] = 11111, B[7-4]=1111
+				未定义
+			B[24]=0, 子识别码=0001
+				sadd16			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 0 0 1 Rm
+				qadd16			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 0 0 1 Rm
+				shadd16			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 0 0 1 Rm
+				uadd16			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 0 0 1 Rm
+				uqadd16			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 0 0 1 Rm
+				uhadd16			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 0 0 1 Rm
+				usada8			cond 0 1 1 1 1 0 0 0 Rd Rn Rs 0 0 0 1 Rm
+				usad8			cond 0 1 1 1 1 0 0 0 Rd 1 1 1 1 Rs 0 0 0 1 Rm
+			B[24]=0, 子识别码=0011
+				saddsubx		cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 0 1 1 Rm
+				qaddsubx		cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 0 1 1 Rm
+				shaddsubx		cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 0 1 1 Rm
+				uaddsubx		cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 0 1 1 Rm
+				uqaddsubx		cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 0 1 1 Rm
+				uhaddsubx		cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 0 1 1 Rm
+				ssat16			cond 0 1 1 0 1 0 1 0 sat_imm Rd SBO 0 0 1 1 Rm
+				rev				cond 0 1 1 0 1 0 1 1 SBO Rd SBO 0 0 1 1 Rm
+				usat16			cond 0 1 1 0 1 1 1 0 sat_imm Rd SBO 0 0 1 1 Rm
+			B[24]=0, 子识别码=0101
+				ssubaddx		cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 1 0 1 Rm
+				qsubaddx		cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 1 0 1 Rm
+				shsubaddx		cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 1 0 1 Rm
+				usubaddx		cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 1 0 1 Rm
+				uqsubaddx		cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 1 0 1 Rm
+				uhsubaddx		cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 1 0 1 Rm
+			B[24]=0, 子识别码=0111
+				ssub16			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 0 1 1 1 Rm
+				qsub16			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 0 1 1 1 Rm
+				shsub16			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 0 1 1 1 Rm
+				usub16			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 0 1 1 1 Rm
+				uqsub16			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 0 1 1 1 Rm
+				uhsub16			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 0 1 1 1 Rm
+				sxtab16			cond 0 1 1 0 1 0 0 0 Rn Rd rotate SBZ 0 1 1 1 Rm
+				sxtb16			cond 0 1 1 0 1 0 0 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
+				sxtab			cond 0 1 1 0 1 0 1 0 Rn Rd rotate SBZ 0 1 1 1 Rm
+				sxtb			cond 0 1 1 0 1 0 1 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
+				sxtah			cond 0 1 1 0 1 0 1 1 Rn Rd rotate SBZ 0 1 1 1 Rm
+				sxth			cond 0 1 1 0 1 0 1 1 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
+				uxtab16			cond 0 1 1 0 1 1 0 0 Rn Rd rotate SBZ 0 1 1 1 Rm
+				uxtb16			cond 0 1 1 0 1 1 0 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
+				uxtab			cond 0 1 1 0 1 1 1 0 Rn Rd rotate SBZ 0 1 1 1 Rm
+				uxtb			cond 0 1 1 0 1 1 1 0 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
+				uxtah			cond 0 1 1 0 1 1 1 1 Rn Rd rotate SBZ 0 1 1 1 Rm
+				uxth			cond 0 1 1 0 1 1 1 1 1 1 1 1 Rd rotate SBZ 0 1 1 1 Rm
+			B[24]=0, 子识别码=1001
+				sadd8			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 1 0 0 1 Rm
+				qadd8			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 1 0 0 1 Rm
+				shadd8			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 1 0 0 1 Rm
+				uadd8			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 1 0 0 1 Rm
+				uqadd8			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 1 0 0 1 Rm
+				uhadd8			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 1 0 0 1 Rm
+			B[24]=0, 子识别码=1011
+				sel				cond 0 1 1 0 1 0 0 0 Rn Rd SBO 1 0 1 1 Rm
+				rev16			cond 0 1 1 0 1 0 1 1 SBO Rd SBO 1 0 1 1 Rm
+				revsh			cond 0 1 1 0 1 1 1 1 SBO Rd SBO 1 0 1 1 Rm
+			B[24]=0, 子识别码=1111
+				ssub8			cond 0 1 1 0 0 0 0 1 Rn Rd SBO 1 1 1 1 Rm
+				qsub8			cond 0 1 1 0 0 0 1 0 Rn Rd SBO 1 1 1 1 Rm
+				shsub8			cond 0 1 1 0 0 0 1 1 Rn Rd SBO 1 1 1 1 Rm
+				usub8			cond 0 1 1 0 0 1 0 1 Rn Rd SBO 1 1 1 1 Rm
+				uqsub8			cond 0 1 1 0 0 1 1 0 Rn Rd SBO 1 1 1 1 Rm
+				uhsub8			cond 0 1 1 0 0 1 1 1 Rn Rd SBO 1 1 1 1 Rm
+			B[24]=0, 子识别码归纳到上面去(属于上面的情况)
+				pkhbt			cond 0 1 1 0 1 0 0 0 Rn Rd shift_imm 0 0 1 Rm			0001 1001
+				pkhtb			cond 0 1 1 0 1 0 0 0 Rn Rd shift_imm 1 0 1 Rm			0101 1101
+				ssat			cond 0 1 1 0 1 0 1 sat_imm Rd shift_imm sh 0 1 Rm		0001 0101 1001 1101
+				usat			cond 0 1 1 0 1 1 1 sat_imm Rd shift_imm sh 0 1 Rm		0001 0101 1001 1101
+			B[24]=1，子识别码=xxx1
+				smlad			cond 0 1 1 1 0 0 0 0 Rd Rn Rs 0 0 X 1 Rm				0001 0011
+				smuad			cond 0 1 1 1 0 0 0 0 Rd 1 1 1 1 Rs 0 0 X 1 Rm			0001 0011
+				smlsd			cond 0 1 1 1 0 0 0 0 Rd Rn Rs 0 1 X 1 Rm				0101 0111
+				smusd		`	cond 0 1 1 1 0 0 0 0 Rd 1 1 1 1 Rs 0 1 X 1 Rm			0101 0111
+				smlald			cond 0 1 1 1 0 1 0 0 RdHi RdLo Rs 0 0 X 1 Rm			0001 0011
+				smlsld			cond 0 1 1 1 0 1 0 0 RdHi RdLo Rs 0 1 X 1 Rm			0101 0111
+				smmla			cond 0 1 1 1 0 1 0 1 Rd Rn Rs 0 0 R 1 Rm				0001 0011
+				smmls			cond 0 1 1 1 0 1 0 1 Rd Rn Rs 1 1 R 1 Rm				1101 1111
+				smmul			cond 0 1 1 1 0 1 0 1 Rd 1 1 1 1 Rs 0 0 R 1 Rm			0001 0011
 
-	识别码=010 | 子识别码=xxx0
-			ldr				cond 0 1 I P U 0 W 1 Rn Rd addr_mode
-			ldrb			cond 0 1 I P U 1 W 1 Rn Rd addr_mode
-			ldrbt			cond 0 1 I 0 U 1 1 1 Rn Rd addr_mode
-			ldrt			cond 0 1 I 0 U 0 1 1 Rn Rd addr_mode
-			str				cond 0 1 I P U 0 W 0 Rn Rd addr_mode
-			strb			cond 0 1 I P U 1 W 0 Rn Rd addr_mode
-			strbt			cond 0 1 I 0 U 1 1 0 Rn Rd addr_mode
-			strt			cond 0 1 I 0 U 0 1 0 Rn Rd addr_mode
-	;
+		识别码=010 | 子识别码=xxx0
+				ldr				cond 0 1 I P U 0 W 1 Rn Rd addr_mode
+				ldrb			cond 0 1 I P U 1 W 1 Rn Rd addr_mode
+				ldrbt			cond 0 1 I 0 U 1 1 1 Rn Rd addr_mode
+				ldrt			cond 0 1 I 0 U 0 1 1 Rn Rd addr_mode
+				str				cond 0 1 I P U 0 W 0 Rn Rd addr_mode
+				strb			cond 0 1 I P U 1 W 0 Rn Rd addr_mode
+				strbt			cond 0 1 I 0 U 1 1 0 Rn Rd addr_mode
+				strt			cond 0 1 I 0 U 0 1 0 Rn Rd addr_mode
+		;
 
-100
-			ldm				cond 1 0 0 P U 0 W 1 Rn register_list
-			ldm(2)			cond 1 0 0 P U 1 0 1 Rn 0 register_list
-			ldm(3)			cond 1 0 0 P U 1 W 1 Rn 1 register_list
-			stm(1)			cond 1 0 0 P U 0 W 0 Rn register_list
-			stm(2)			cond 1 0 0 P U 1 0 0 Rn register_list
-	;
+	100
+				ldm				cond 1 0 0 P U 0 W 1 Rn register_list
+				ldm(2)			cond 1 0 0 P U 1 0 1 Rn 0 register_list
+				ldm(3)			cond 1 0 0 P U 1 W 1 Rn 1 register_list
+				stm(1)			cond 1 0 0 P U 0 W 0 Rn register_list
+				stm(2)			cond 1 0 0 P U 1 0 0 Rn register_list
+		;
 
-101
-			b,bl			cond 1 0 1 L signed_immed_24
-	;
+	101
+				b,bl			cond 1 0 1 L signed_immed_24
+		;
 
-110
-			ldc				cond 1 1 0 P U N W 1 Rn CRd cp_num 8_bit_word_offset
-			mrrc			cond 1 1 0 0 0 1 0 1 Rn Rd cp_num opcode CRm
-			stc				cond 1 1 0 P U N W 0 Rn CRd cp_num 8_bit_word_offset
-			mcrr			cond 1 1 0 0 0 1 0 0 Rn Rd cp_num opcode CRm
-	;
+	110
+				ldc				cond 1 1 0 P U N W 1 Rn CRd cp_num 8_bit_word_offset
+				mrrc			cond 1 1 0 0 0 1 0 1 Rn Rd cp_num opcode CRm
+				stc				cond 1 1 0 P U N W 0 Rn CRd cp_num 8_bit_word_offset
+				mcrr			cond 1 1 0 0 0 1 0 0 Rn Rd cp_num opcode CRm
+		;
 
-111
-	B[24]=0
-			cdp				cond 1 1 1 0 opcode_1 CRn CRd cp_num opcode_2 0 CRm
-			mcr				cond 1 1 1 0 opcode_1 0 CRn Rd cp_num opcode_2 1 CRm
-			mrc				cond 1 1 1 0 opcode_1 1 CRn Rd cp_num opcode_2 1 CRm
-	B[24]=1
-			swi				cond 1 1 1 1 immed_24
+	111
+		B[24]=0
+				cdp				cond 1 1 1 0 opcode_1 CRn CRd cp_num opcode_2 0 CRm
+				mcr				cond 1 1 1 0 opcode_1 0 CRn Rd cp_num opcode_2 1 CRm
+				mrc				cond 1 1 1 0 opcode_1 1 CRn Rd cp_num opcode_2 1 CRm
+		B[24]=1
+				swi				cond 1 1 1 1 immed_24
 
-条件限定指令 cond=1111
-			cps				cond 0 0 0 1 0 0 0 0 imod mmod 0 SBZ A I F 0 mode			[16]=0
-			setend			cond 0 0 0 1 0 0 0 0 0 0 0 1 SBZ E SBZ 0 0 0 0 SBZ			[16] = 1
-			pld				cond 0 1 I 1 U 1 0 1 Rn 1 1 1 1 addr_mode
-			rfe				cond 1 0 0 P U 0 W 1 Rn SBZ 1 0 1 0 SBZ
-			srs				cond 1 0 0 P U 1 W 0 1 1 0 1 SBZ 0 1 0 1 SBZ mode
-			blx(1)			cond 1 0 1 H signed_immed_24
-
-
+	条件限定指令 cond=1111
+				cps				cond 0 0 0 1 0 0 0 0 imod mmod 0 SBZ A I F 0 mode			[16]=0
+				setend			cond 0 0 0 1 0 0 0 0 0 0 0 1 SBZ E SBZ 0 0 0 0 SBZ			[16] = 1
+				pld				cond 0 1 I 1 U 1 0 1 Rn 1 1 1 1 addr_mode
+				rfe				cond 1 0 0 P U 0 W 1 Rn SBZ 1 0 1 0 SBZ
+				srs				cond 1 0 0 P U 1 W 0 1 1 0 1 SBZ 0 1 0 1 SBZ mode
+				blx(1)			cond 1 0 1 H signed_immed_24
 */

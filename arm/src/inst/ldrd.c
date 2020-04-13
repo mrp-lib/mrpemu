@@ -13,8 +13,8 @@ int32 arm_inst_ldrd(cpu_state_t *st, uint32 inst)
 	if ((inst & 0x01200000) == 0x00200000)
 		return EXEC_UNPREDICTABLE;
 
-	uint32 rn = (inst >> 16) & 0x000f;
-	uint32 rd = (inst >> 12) & 0x000f;
+	uint32 rn = inst_b4(16);
+	uint32 rd = inst_b4(12);
 	uint32 addr = addr_mode_3(st, inst);
 
 	//要求rd是偶数，并且不能是r14

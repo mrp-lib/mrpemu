@@ -7,16 +7,16 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 	uint32 shifter_operand;
 	bool shifter_carry_out;
 	//取得指令的I位(25)
-	uint32 I = (inst >> 25) & 0b1;
+	uint32 I = inst_b1(25);
 	//如果I位为1表示立即数偏移
 	if (I == 1)
 	{
-		uint32 immed8 = inst & 0b11111111;
-		uint32 imm = (inst >> 8) & 0b1111;
+		uint32 immed8 = inst_b8(0);
+		uint32 imm = inst_b4(8);
 		shifter_operand = ror(immed8, imm * 2);
 		if (imm == 0)
 		{
-			shifter_carry_out = st->c;
+			shifter_carry_out = st->cpsr.c;
 		}
 		else
 		{
@@ -27,12 +27,12 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 	else
 	{
 		//取得Rm和shift
-		uint32 Rm = st->registers[inst & 0b1111];
-		uint32 shift = (inst >> 5) & 0b11;
+		uint32 Rm = st->registers[inst_b4(0)];
+		uint32 shift = inst_bm(5, 6);
 		//第4位为0，使用立即数
 		if ((inst & 0b10000) == 0)
 		{
-			uint32 imm = (inst >> 7) & 0b11111;
+			uint32 imm = inst_bm(7, 11);
 			//A5-9
 			if (shift == 0b00)
 			{
@@ -40,7 +40,7 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 				if (imm == 0)
 				{
 					shifter_operand = Rm;
-					shifter_carry_out = st->c;
+					shifter_carry_out = st->cpsr.c;
 				}
 				else
 				{
@@ -92,7 +92,7 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 				//循环右移扩展 (参考: A5-17)
 				if (imm == 0)
 				{
-					shifter_operand = lsr(Rm, 1) | lsl(st->c, 31);
+					shifter_operand = lsr(Rm, 1) | lsl(st->cpsr.c, 31);
 					shifter_carry_out = Rm & 0b1;
 				}
 				else
@@ -105,13 +105,13 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 		//第4位为1，使用寄存器
 		else
 		{
-			uint32 Rs = st->registers[(inst >> 8) & 0b1111];
+			uint32 Rs = st->registers[inst_b4(8)];
 			uint32 Rs07 = Rs & 0b11111111;
 			//对于Rs07为0时，处理方式都是一样的
 			if (Rs07 == 0)
 			{
 				shifter_operand = Rm;
-				shifter_carry_out = st->c;
+				shifter_carry_out = st->cpsr.c;
 			}
 			else
 			{

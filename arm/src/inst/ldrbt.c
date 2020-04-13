@@ -13,8 +13,8 @@ int32 arm_inst_ldrbt(cpu_state_t *st, uint32 inst)
 
 	//得到地址
 	uint32 addr = addr_mode_2(st, inst);
-	uint32 rn = (inst >> 16) & 0x000f;
-	uint32 rd = (inst >> 12) & 0x000f;
+	uint32 rn = inst_b4(16);
+	uint32 rd = inst_b4(12);
 
 	if (rd == r_pc)
 		return EXEC_UNPREDICTABLE;

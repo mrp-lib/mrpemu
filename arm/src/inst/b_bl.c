@@ -2,7 +2,7 @@
 
 int32 arm_inst_b_bl(cpu_state_t *st, uint32 inst)
 {
-	uint32 l = (inst >> 24) & 0b0001;
+	uint32 l = inst_b1(24);
 
 	loginst(l ? "bl" : "b", inst);
 

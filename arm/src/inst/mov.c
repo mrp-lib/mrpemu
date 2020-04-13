@@ -7,8 +7,8 @@ int32 arm_inst_mov(cpu_state_t *st, uint32 inst)
 	if (!cond_ok())
 		return EXEC_SUCCESS;
 
-	uint32 s = (inst >> 20) & 0b0001;
-	uint32 rd = (inst >> 12) & 0b1111;
+	uint32 s = inst_b1(20);
+	uint32 rd = inst_b4(12);
 	uint32 operand;
 	bool carry = shifter_operand(st, inst, &operand);
 
@@ -20,9 +20,9 @@ int32 arm_inst_mov(cpu_state_t *st, uint32 inst)
 	}
 	else if (s == 1)
 	{
-		st->n = operand >> 31;
-		st->z = operand == 0;
-		st->c = carry;
+		st->cpsr.n = operand >> 31;
+		st->cpsr.z = operand == 0;
+		st->cpsr.c = carry;
 	}
 
 	return EXEC_SUCCESS;

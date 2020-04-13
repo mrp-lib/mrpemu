@@ -25,11 +25,11 @@ uint32 _addr_bits(uint32 inst)
 //cond 0 1 1 0 U B 0 L Rn Rd shift_imm shift 0 Rm
 uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 {
-	uint32 I = (inst >> 25) & 0b0001;
-	uint32 P = (inst >> 24) & 0b0001;
-	uint32 U = (inst >> 23) & 0b0001;
-	uint32 W = (inst >> 21) & 0b0001;
-	uint32 rn = (inst >> 16) & 0x000f;
+	uint32 I = inst_b1(25);
+	uint32 P = inst_b1(24);
+	uint32 U = inst_b1(23);
+	uint32 W = inst_b1(21);
+	uint32 rn = inst_b4(16);
 
 	uint32 address;
 
@@ -42,7 +42,7 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 		//立即数偏移
 		if (I == 0)
 		{
-			uint32 offset_12 = inst & 0x0fff;
+			uint32 offset_12 = inst_bm(0, 11);
 			if (P == 0)
 			{
 				address = st->registers[rn];
@@ -58,10 +58,10 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 		//寄存器偏移
 		else
 		{
-			uint32 rm = inst & 0x000f;
-			uint32 not0 = (inst & 0x00000ff0); //表示4-11位非全0
-			uint32 shift = (inst >> 5) & 0b0011;
-			uint32 shift_imm = (inst >> 7) & 0x001f;
+			uint32 rm = inst_b4(0);
+			uint32 not0 = inst_bm(4, 11); //表示4-11位非全0
+			uint32 shift = inst_bm(5, 6);
+			uint32 shift_imm = inst_bm(7, 11);
 
 			uint32 index;
 			if (P == 0) //p==0 w==0
@@ -92,7 +92,7 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 						break;
 					case 0b11:
 						if (shift_imm == 0) /* RRX */
-							index = lsl(st->c, 31) | lsr(st->registers[rm], 1);
+							index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
 						else /* ROR */
 							index = ror(st->registers[rm], shift_imm);
 						break;
@@ -130,7 +130,7 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 						break;
 					case 0b11:
 						if (shift_imm == 0) /* RRX */
-							index = lsl(st->c, 31) | lsr(st->registers[rm], 1);
+							index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
 						else /* ROR */
 							index = ror(st->registers[rm], shift_imm);
 						break;
@@ -167,7 +167,7 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 						break;
 					case 0b11:
 						if (shift_imm == 0) /* RRX */
-							index = lsl(st->c, 31) | lsr(st->registers[rm], 1);
+							index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
 						else /* ROR */
 							index = ror(st->registers[rm], shift_imm);
 						break;
@@ -200,11 +200,11 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 //cond 0 0 0 0 U 0 0 L Rn Rd SBZ 1 S H 1 Rm
 uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
 {
-	uint32 p = (inst >> 24) & 0x0001;
-	uint32 i = (inst >> 22) & 0x0001;
-	uint32 u = (inst >> 23) & 0x0001;
-	uint32 w = (inst >> 21) & 0x0001;
-	uint32 rn = (inst >> 16) & 0x000f;
+	uint32 p = inst_b1(24);
+	uint32 u = inst_b1(23);
+	uint32 i = inst_b1(22);
+	uint32 w = inst_b1(21);
+	uint32 rn = inst_b4(16);
 
 	uint32 pw = (p << 1) | w; //pw的组合
 
@@ -213,8 +213,8 @@ uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
 	//立即数偏移
 	if (i == 1)
 	{
-		uint32 immh = (inst >> 8) & 0x000f;
-		uint32 imml = inst & 0x000f;
+		uint32 immh = inst_b4(8);
+		uint32 imml = inst_b4(0);
 		uint32 offset_8 = (immh << 4) | immh;
 		if (pw == 0b00)
 		{
@@ -235,7 +235,7 @@ uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
 	//寄存器偏移
 	else
 	{
-		uint32 rm = inst & 0x000f;
+		uint32 rm = inst_b4(0);
 		if (pw == 0b00)
 		{
 			address = st->registers[rn];
@@ -262,10 +262,10 @@ uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
 //cond 1 0 0 1 1 S W L Rn register list
 void addr_mode_4(cpu_state_t *st, uint32 inst, uint32 *start_address, uint32 *end_address)
 {
-	uint32 pu = (inst >> 23) & 0b0011;
-	uint32 rn = (inst >> 16) & 0b1111;
-	uint32 w = (inst >> 21) & 0b0001;
-	uint32 registers_list = inst & 0x0000ffff;
+	uint32 pu = inst_bm(23, 24);
+	uint32 rn = inst_b4(16);
+	uint32 w = inst_b1(21);
+	uint32 registers_list = inst_bm(0, 15);
 
 	uint32 reg_bits = _addr_bits(registers_list); //计算总共有设置了多少个寄存器
 
