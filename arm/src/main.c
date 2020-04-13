@@ -3,8 +3,19 @@
 #include "arm.h"
 #include "elf.h"
 
+#include <math.h>
+
 int main()
 {
+	// println("int32 %d ~ %d", (int32)(-powl(2, 31)),(int32)(powl(2, 31) - 1));
+	// println("uint32 0~%d", (int32)(powl(2, 32)-1));
+	// printf("\n");
+	// println("int16 %d ~ %d", (int32)(-powl(2, 15)),(int32)(powl(2, 15) - 1));
+	// println("uint16 0~%d", (int32)(powl(2, 16)-1));
+	// printf("\n");
+	// println("int8 %d ~ %d", (int32)(-powl(2, 7)),(int32)(powl(2, 7) - 1));
+	// println("uint8 0~%d", (int32)(powl(2, 8)-1));
+
 	println("--------------------->");
 	//打开测试用到的elf文件
 	elf_head_t head;

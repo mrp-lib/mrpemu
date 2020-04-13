@@ -20,5 +20,5 @@ int32 arm_inst_mrs(cpu_state_t *st, uint32 inst)
 		st->registers[rd] = psr_ldval(&st->cpsr);
 	}
 
-	return EXEC_NOT_IMPL;
+	return EXEC_SUCCESS;
 }
