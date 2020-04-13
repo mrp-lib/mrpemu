@@ -16,7 +16,7 @@ int32 arm_inst_qadd(cpu_state_t *st, uint32 inst)
 	uint32 rm = inst_b4(0);
 
 	//pc
-	if (rn == r_pc || rd == r_pc || rd == r_pc)
+	if (rn == r_pc || rd == r_pc || rm == r_pc)
 		return EXEC_UNPREDICTABLE;
 
 	bool issat;

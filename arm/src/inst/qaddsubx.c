@@ -17,7 +17,7 @@ int32 arm_inst_qaddsubx(cpu_state_t *st, uint32 inst)
 	bool issat;
 
 	//pc
-	if (rn == r_pc || rd == r_pc || rd == r_pc)
+	if (rn == r_pc || rd == r_pc || rm == r_pc)
 		return EXEC_UNPREDICTABLE;
 
 	//低位结果
