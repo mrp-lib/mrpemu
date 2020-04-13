@@ -21,14 +21,14 @@ int32 arm_inst_qadd16(cpu_state_t *st, uint32 inst)
 		return EXEC_UNPREDICTABLE;
 
 	//低位结果
-	int64 resL = bitm(regvl(rm), 0, 15) + bitm(regvl(rn), 0, 15);
+	int64 resL = bitm(regv(rm), 0, 15) + bitm(regv(rn), 0, 15);
 	uint32 L = signed_sat(resL, int_min(16), int_max(16), &issat);
 	//高位结果
-	int64 resH = bitm(regvl(rm), 16, 31) + bitm(regvl(rn), 16, 31);
+	int64 resH = bitm(regv(rm), 16, 31) + bitm(regv(rn), 16, 31);
 	uint32 H = signed_sat(resH, int_min(16), int_max(16), &issat);
 
 	//结果综合
-	regvs(rd, (H << 16) | L);
+	regv(rd) = (H << 16) | L;
 
 	return EXEC_SUCCESS;
 }

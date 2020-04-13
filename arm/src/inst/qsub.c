@@ -21,9 +21,8 @@ int32 arm_inst_qsub(cpu_state_t *st, uint32 inst)
 
 	bool issat;
 
-	int64 _res = regvl(rm) - regvl(rn);
-	uint32 res = signed_sat(_res, int_min(32), int_max(32), &issat);
-	regvs(rd, res);
+	int64 _res = regv(rm) - regv(rn);
+	regv(rd) = signed_sat(_res, int_min(32), int_max(32), &issat);
 
 	if (issat)
 	{
