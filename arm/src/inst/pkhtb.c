@@ -19,16 +19,16 @@ int32 arm_inst_pkhtb(cpu_state_t *st, uint32 inst)
 	uint32 l;
 	if (shift_imm == 0)
 	{
-		if (bit1(regvl(rm), 31) == 0)
+		if (bit1(regv(rm), 31) == 0)
 			l = 0;
 		else
 			l = 0xffff;
 	}
 	else
-		l = asr(regvl(rm), shift_imm) & 0x0000ffff;
-	uint32 h = regvl(rn) & 0xffff0000;
+		l = asr(regv(rm), shift_imm) & 0x0000ffff;
+	uint32 h = regv(rn) & 0xffff0000;
 
-	regvs(rd, h | l);
+	regv(rd) = h | l;
 
 	return EXEC_SUCCESS;
 }

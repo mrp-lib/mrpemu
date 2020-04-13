@@ -16,9 +16,9 @@ int32 arm_inst_pkhbt(cpu_state_t *st, uint32 inst)
 	if (rn == r_pc || rd == r_pc || rm == r_pc)
 		return EXEC_UNPREDICTABLE;
 
-	uint32 l = regvl(rn) & 0x0000ffff;
-	uint32 h = lsl(regvl(rm), shift_imm) & 0xffff0000;
-	regvs(rd, h | l);
+	uint32 l = regv(rn) & 0x0000ffff;
+	uint32 h = lsl(regv(rm), shift_imm) & 0xffff0000;
+	regv(rd) = h | l;
 
 	return EXEC_SUCCESS;
 }
