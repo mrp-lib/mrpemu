@@ -18,10 +18,10 @@ int32 arm_inst_rev(cpu_state_t *st, uint32 inst)
 	if (rd == r_pc || rm == r_pc)
 		return EXEC_UNPREDICTABLE;
 
-	regvs(rd, (bitm(regvl(rm), 0, 7) << 24) |
-				  (bitm(regvl(rm), 8, 15) << 16) |
-				  (bitm(regvl(rm), 16, 23) << 8) |
-				  bitm(regvl(rm), 24, 31));
+	regv(rd) = (bitm(regv(rm), 0, 7) << 24) |
+			   (bitm(regv(rm), 8, 15) << 16) |
+			   (bitm(regv(rm), 16, 23) << 8) |
+			   bitm(regv(rm), 24, 31);
 
 	return EXEC_SUCCESS;
 }

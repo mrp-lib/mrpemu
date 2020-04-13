@@ -20,8 +20,7 @@
 #define asr(val, shift) ((val) >> (shift))							 //算术右移
 #define ror(val, shift) (lsr(val, shift) | lsl(val, (32 - (shift)))) //循环右移
 
-#define regvl(R) (st->registers[R])		   //获取寄存器的值
-#define regvs(R, V) (st->registers[R] = V) //设置寄存器的值
+#define regv(R) (st->registers[R]) //获取寄存器的值
 
 typedef struct
 {

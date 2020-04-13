@@ -18,14 +18,14 @@ int32 arm_inst_revsh(cpu_state_t *st, uint32 inst)
 	if (rd == r_pc || rm == r_pc)
 		return EXEC_UNPREDICTABLE;
 
-	uint32 l = (bitm(regvl(rm), 0, 7) << 8) | bitm(regvl(rm), 8, 15);
+	uint32 l = (bitm(regv(rm), 0, 7) << 8) | bitm(regv(rm), 8, 15);
 	uint32 h;
-	if (bit1(regvl(rm), 7) == 1)
+	if (bit1(regv(rm), 7) == 1)
 		h = 0xffff0000; //这里赋值好避免移位
 	else
 		h = 0x00000000;
 
-	regvs(rd, h | l);
+	regv(rd) = h | l;
 
 	return EXEC_SUCCESS;
 }
