@@ -1,7 +1,9 @@
 #ifndef __ARM_H__
 #define __ARM_H__
 
+#include "common/bits.h"
 #include "common/log.h"
+#include "common/type.h"
 
 //打印指令
 #define loginst(name, hex) println("[INST]  name=%s, hex=0x%08x", name, hex)

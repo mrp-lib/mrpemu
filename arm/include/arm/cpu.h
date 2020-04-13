@@ -20,16 +20,36 @@
 #define asr(val, shift) (val >> shift)							   //算术右移
 #define ror(val, shift) (lsr(val, shift) | lsl(val, (32 - shift))) //循环右移
 
-//CPU状态
 typedef struct
 {
-	uint32 registers[16]; //寄存器列表
-	//cpsr
+	//31  30  29  28  27  26-25   24  23-20      19-16    15-10     9  8  7  6  5  4-0
+	//N   Z   C   V   Q   Res     J   RESERVED   GE[3:0]  RESERVED  E  A  I  F  T  M[4:0]
+
 	bool n;
 	bool z;
 	bool c;
 	bool v;
+
+	bool q;
+
+	bool j;
+	uint32 ge;
+
+	bool e;
+	bool a;
+	bool i;
+	bool f;
 	bool t;
+
+	uint32 mode;
+
+} cpu_psr_t;
+
+//CPU状态
+typedef struct
+{
+	uint32 registers[16]; //寄存器列表
+	cpu_psr_t cpsr;		  //cpsr寄存器
 
 	//内存空间
 	memory_t *mem;
@@ -47,10 +67,18 @@ void cpu_destory(cpu_state_t *st);
 //取出指令
 uint32 cpu_fetch_inst(cpu_state_t *st);
 
+//取cpsr寄存器
+uint32 cpu_cpsr(cpu_state_t *st);
+
 //执行指令
 int32 cpu_exec_inst(cpu_state_t *st, uint32 inst);
 
 //打印寄存器信息
 void cpu_print_regs(cpu_state_t *st);
+
+//取得psr寄存器的值
+uint32 psr_ldval(cpu_psr_t *psr);
+//设置psr寄存器的值
+uint32 psr_stval(cpu_psr_t *psr, uint32 val);
 
 #endif

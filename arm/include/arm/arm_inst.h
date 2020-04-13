@@ -4,15 +4,6 @@
 #include "common/type.h"
 #include "cpu.h"
 
-//通过数字类型类型计算一个数字的位数
-#define val_bits(val) ((uint32)sizeof(val) << 3)
-
-//带符号扩展，传递值和值当前的位数
-#define sign_extend(val, val_bits) (((int32)val << (32 - val_bits)) >> (32 - val_bits))
-
-//带符号扩展，传递值和值当前的位数 (注意：如果val的位数不是8、16请调用sign_extend手动传递位数)
-#define sign_extend_e(val) (((int32)val << (32 - val_bits(val))) >> (32 - val_bits(val)))
-
 //检测是不是偶数
 #define even(num) ((num & 0x0001) == 0)
 
