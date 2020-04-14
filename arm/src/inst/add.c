@@ -15,7 +15,7 @@ int32 arm_inst_add(cpu_state_t *st, uint32 inst)
 	uint32 operand;
 	bool carry = shifter_operand(st, inst, &operand);
 	//计算
-	uint32 result = st->registers[rd] = st->registers[rn] + operand;
+	uint32 result = regv(rd) = regv(rn) + operand;
 	if (s == 1 && rd == 15)
 	{
 		//TODO 这种情况暂时不处理
@@ -24,8 +24,8 @@ int32 arm_inst_add(cpu_state_t *st, uint32 inst)
 	{
 		st->cpsr.n = result >> 31;
 		st->cpsr.z = result == 0;
-		st->cpsr.c = result < st->registers[rn];
-		st->cpsr.v = (st->registers[rn] ^ operand ^ -1) & (st->registers[rn] ^ result);
+		st->cpsr.c = carry(result, regv(rn));
+		st->cpsr.v = overflow_add(result, regv(rn), operand);
 	}
 	return EXEC_SUCCESS;
 }

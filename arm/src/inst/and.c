@@ -15,7 +15,7 @@ int32 arm_inst_and(cpu_state_t *st, uint32 inst)
 	uint32 operand;
 	bool carry = shifter_operand(st, inst, &operand);
 	//计算
-	uint32 result = st->registers[rd] = st->registers[rn] & operand;
+	uint32 result = regv(rd) = regv(rn) & operand;
 	if (s == 1 && rd == 15)
 	{
 		//TODO 这种情况暂时不处理

@@ -15,7 +15,15 @@ int main()
 	// printf("\n");
 	// println("int8 %d ~ %d", (int32)(-powl(2, 7)),(int32)(powl(2, 7) - 1));
 	// println("uint8 0~%d", (int32)(powl(2, 8)-1));
+	{
+		uint32 a = 0x80000000;
+		uint32 b = 0x00000001;
+		uint32 c = b - a;
 
+		uint32 ovf = overflow_sub(c, b, a);
+
+		println("%x", c);
+	}
 	println("--------------------->");
 	//打开测试用到的elf文件
 	elf_head_t head;
@@ -64,7 +72,6 @@ int main()
 
 	println("--------------------->");
 
-	st->registers[1] = 8;
 	// st->registers[2] = 0x00e0;
 	// st->registers[3] = 0xf0;
 

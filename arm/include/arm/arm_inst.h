@@ -5,7 +5,7 @@
 #include "cpu.h"
 
 //检测是不是偶数
-#define even(num) ((num & 0x0001) == 0)
+#define even(num) (((num)&0x0001) == 0)
 
 //快速匹配条件是否满足
 #define cond_ok() check_cond(st, inst)
@@ -17,6 +17,11 @@
 #define ldm_rn_pc_check()                \
 	if (((inst >> 16) & 0x000f) == r_pc) \
 	return EXEC_UNPREDICTABLE
+
+#define overflow_add(result, num1, num2) (((result) ^ (num1)) & ((result) ^ (num2)) & 0x80000000) //检测结果是否溢出(不考虑是否有C位，因为如果本身溢出了，再加上或减去C位还是溢出)，顺序为：结果，被加数，加数
+#define overflow_sub(result, num1, num2) overflow_add(num1, result, num2)						  //检测结果是否溢出(不考虑是否有C位，因为如果本身溢出了，再加上或减去C位还是溢出)，顺序为：结果，被减数，减数
+#define carry(result, num1) ((result) < (num1))													  //检测是否进位(都加上一个数了结果却变小？)
+#define borrow(result, num1) ((result) > (num1))												  //检测是否借位(都减掉一个数了结果却变大？)
 
 bool check_cond(cpu_state_t *st, uint32 inst);												//条件检测
 bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand);						//地址模式1

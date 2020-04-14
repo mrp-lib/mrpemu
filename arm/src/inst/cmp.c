@@ -15,11 +15,11 @@ int32 arm_inst_cmp(cpu_state_t *st, uint32 inst)
 	uint32 operand;
 	bool carry = shifter_operand(st, inst, &operand);
 
-	uint32 result = st->registers[rn] - operand;
+	uint32 result = regv(rn) - operand;
 	st->cpsr.n = result >> 31;
 	st->cpsr.z = result == 0;
-	st->cpsr.c = result > st->registers[rn]; //减完之后结果反而大于了原来的数
-	st->cpsr.v = (st->registers[rn] ^ operand) & (st->registers[rn] ^ result);
+	st->cpsr.c = !borrow(result, regv(rn));
+	st->cpsr.v = overflow_sub(result, regv(rn), operand);
 
 	return EXEC_SUCCESS;
 }
