@@ -49,18 +49,59 @@ void cpu_print_regs(cpu_state_t *st)
 {
 	for (uint32 i = 0; i <= 15; i++)
 	{
-		if (i != 0)
+		if (i == 8)
+			printf("\n");
+		if (i != 0 && i != 8)
 			printf(" ");
 		printf("R%d=0x%08x", i, st->registers[i]);
 	}
+
+	char ge_buf[4] = {0};
+	for (uint32 i = 0; i < 4; i++)
+		ge_buf[i] = bit1(st->cpsr.ge, i) ? '1' : '0';
+
+	char *mode_p;
+	switch (st->cpsr.mode)
+	{
+	case 0b10000:
+		mode_p = "USR";
+		break;
+	case 0b10001:
+		mode_p = "FIQ";
+		break;
+	case 0b10010:
+		mode_p = "IRQ";
+		break;
+	case 0b10011:
+		mode_p = "SVC";
+		break;
+	case 0b10111:
+		mode_p = "ABT";
+		break;
+	case 0b11011:
+		mode_p = "UND";
+		break;
+	case 0b11111:
+		mode_p = "SYS";
+		break;
+	}
+
 	//打印cspr
-	printf(" CSPR=");
+	printf("\nCSPR=");
 	printf(st->cpsr.n ? "N" : "n");
 	printf(st->cpsr.z ? "Z" : "z");
 	printf(st->cpsr.c ? "C" : "c");
 	printf(st->cpsr.v ? "V" : "v");
-	printf("_");
+	printf(st->cpsr.q ? "Q" : "q");
+	printf(st->cpsr.j ? "J" : "j");
+	printf(st->cpsr.e ? "E" : "e");
+	printf(st->cpsr.i ? "I" : "i");
+	printf(st->cpsr.f ? "F" : "f");
 	printf(st->cpsr.t ? "T" : "t");
+	printf("_");
+	printf("%s", mode_p);
+	printf("_");
+	printf("GE:%s", ge_buf);
 	printf("\n");
 }
 

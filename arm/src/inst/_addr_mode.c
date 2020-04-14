@@ -33,155 +33,157 @@ uint32 addr_mode_2(cpu_state_t *st, uint32 inst)
 
 	uint32 address;
 
-	if (rn == r_pc && P == 1 && W == 0)
+	// if (rn == r_pc && P == 1 && W == 0)
+	// {
+	// 	address = st->registers[r_pc];// + 8;
+	// }
+	// else
+	// {
+	//立即数偏移
+	if (I == 0)
 	{
-		address = st->registers[r_pc] + 8;
-	}
-	else
-	{
-		//立即数偏移
-		if (I == 0)
+		uint32 offset_12 = inst_bm(0, 11);
+		if (P == 0)
 		{
-			uint32 offset_12 = inst_bm(0, 11);
-			if (P == 0)
-			{
-				address = st->registers[rn];
-				st->registers[rn] = (U == 1) ? st->registers[rn] + offset_12 : st->registers[rn] - offset_12;
-			}
-			else
-			{
-				address = (U == 1) ? st->registers[rn] + offset_12 : st->registers[rn] - offset_12;
-				if (W)
-					st->registers[rn] = address;
-			}
+			address = st->registers[rn];
+			st->registers[rn] = (U == 1) ? st->registers[rn] + offset_12 : st->registers[rn] - offset_12;
 		}
-		//寄存器偏移
 		else
 		{
-			uint32 rm = inst_b4(0);
-			uint32 not0 = inst_bm(4, 11); //表示4-11位非全0
-			uint32 shift = inst_bm(5, 6);
-			uint32 shift_imm = inst_bm(7, 11);
-
-			uint32 index;
-			if (P == 0) //p==0 w==0
-			{
-				address = st->registers[rn];
-				if (not0)
-				{
-					switch (shift)
-					{
-					case 0b00:
-						index = lsl(st->registers[rm], shift_imm);
-					case 0b01:
-						if (shift_imm == 0) /* LSR #32 */
-							index = 0;
-						else
-							index = lsr(st->registers[rm], shift_imm);
-						break;
-					case 0b10:
-						if (shift_imm == 0) /* ASR #32 */
-						{
-							if (st->registers[rm] >> 31)
-								index = 0xFFFFFFFF;
-							else
-								index = 0;
-						}
-						else
-							index = asr(rm, shift_imm);
-						break;
-					case 0b11:
-						if (shift_imm == 0) /* RRX */
-							index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
-						else /* ROR */
-							index = ror(st->registers[rm], shift_imm);
-						break;
-					}
-					st->registers[rn] = (U == 1) ? st->registers[rn] + index : st->registers[rn] - index;
-				}
-				else
-					st->registers[rn] = (U == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
-			}
-			else if (W == 0) //p==1 w==0
-			{
-				if (not0)
-				{
-					switch (shift)
-					{
-					case 0b00:
-						index = lsl(st->registers[rm], shift_imm);
-						break;
-					case 0b01:
-						if (shift_imm == 0) /* LSR #32 */
-							index = 0;
-						else
-							index = lsr(st->registers[rm], shift_imm);
-						break;
-					case 0b10:
-						if (shift_imm == 0) /* ASR #32 */
-						{
-							if (st->registers[rm] >> 31)
-								index = 0xFFFFFFFF;
-							else
-								index = 0;
-						}
-						else
-							index = asr(st->registers[rm], shift_imm);
-						break;
-					case 0b11:
-						if (shift_imm == 0) /* RRX */
-							index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
-						else /* ROR */
-							index = ror(st->registers[rm], shift_imm);
-						break;
-					}
-					address = (U == 1) ? st->registers[rn] + index : st->registers[rn] - index;
-				}
-				else
-					address = (U == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
-			}
-			else //p==1 w==1
-			{
-				if (not0)
-				{
-					switch (shift)
-					{
-					case 0b00:
-						index = lsl(st->registers[rm], shift_imm);
-					case 0b01:
-						if (shift_imm == 0) /* LSR #32 */
-							index = 0;
-						else
-							index = lsr(st->registers[rm], shift_imm);
-						break;
-					case 0b10:
-						if (shift_imm == 0) /* ASR #32 */
-						{
-							if (st->registers[rm] >> 31)
-								index = 0xFFFFFFFF;
-							else
-								index = 0;
-						}
-						else
-							index = asr(st->registers[rm], shift_imm);
-						break;
-					case 0b11:
-						if (shift_imm == 0) /* RRX */
-							index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
-						else /* ROR */
-							index = ror(st->registers[rm], shift_imm);
-						break;
-					}
-					address = (U == 1) ? st->registers[rn] + index : st->registers[rn] - index;
-				}
-				else
-					address = (U == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
-
-				//写回
+			address = (U == 1) ? st->registers[rn] + offset_12 : st->registers[rn] - offset_12;
+			if (W)
 				st->registers[rn] = address;
-			}
 		}
 	}
+	//寄存器偏移
+	else
+	{
+		uint32 rm = inst_b4(0);
+		uint32 not0 = inst_bm(4, 11); //表示4-11位非全0
+		uint32 shift = inst_bm(5, 6);
+		uint32 shift_imm = inst_bm(7, 11);
+
+		uint32 index;
+		if (P == 0) //p==0 w==0
+		{
+			address = st->registers[rn];
+			if (not0)
+			{
+				switch (shift)
+				{
+				case 0b00:
+					index = lsl(st->registers[rm], shift_imm);
+				case 0b01:
+					if (shift_imm == 0) /* LSR #32 */
+						index = 0;
+					else
+						index = lsr(st->registers[rm], shift_imm);
+					break;
+				case 0b10:
+					if (shift_imm == 0) /* ASR #32 */
+					{
+						if (st->registers[rm] >> 31)
+							index = 0xFFFFFFFF;
+						else
+							index = 0;
+					}
+					else
+						index = asr(rm, shift_imm);
+					break;
+				case 0b11:
+					if (shift_imm == 0) /* RRX */
+						index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
+					else /* ROR */
+						index = ror(st->registers[rm], shift_imm);
+					break;
+				}
+				st->registers[rn] = (U == 1) ? st->registers[rn] + index : st->registers[rn] - index;
+			}
+			else
+				st->registers[rn] = (U == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
+		}
+		else if (W == 0) //p==1 w==0
+		{
+			if (not0)
+			{
+				switch (shift)
+				{
+				case 0b00:
+					index = lsl(st->registers[rm], shift_imm);
+					break;
+				case 0b01:
+					if (shift_imm == 0) /* LSR #32 */
+						index = 0;
+					else
+						index = lsr(st->registers[rm], shift_imm);
+					break;
+				case 0b10:
+					if (shift_imm == 0) /* ASR #32 */
+					{
+						if (st->registers[rm] >> 31)
+							index = 0xFFFFFFFF;
+						else
+							index = 0;
+					}
+					else
+						index = asr(st->registers[rm], shift_imm);
+					break;
+				case 0b11:
+					if (shift_imm == 0) /* RRX */
+						index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
+					else /* ROR */
+						index = ror(st->registers[rm], shift_imm);
+					break;
+				}
+				address = (U == 1) ? st->registers[rn] + index : st->registers[rn] - index;
+			}
+			else
+				address = (U == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
+		}
+		else //p==1 w==1
+		{
+			if (not0)
+			{
+				switch (shift)
+				{
+				case 0b00:
+					index = lsl(st->registers[rm], shift_imm);
+				case 0b01:
+					if (shift_imm == 0) /* LSR #32 */
+						index = 0;
+					else
+						index = lsr(st->registers[rm], shift_imm);
+					break;
+				case 0b10:
+					if (shift_imm == 0) /* ASR #32 */
+					{
+						if (st->registers[rm] >> 31)
+							index = 0xFFFFFFFF;
+						else
+							index = 0;
+					}
+					else
+						index = asr(st->registers[rm], shift_imm);
+					break;
+				case 0b11:
+					if (shift_imm == 0) /* RRX */
+						index = lsl(st->cpsr.c, 31) | lsr(st->registers[rm], 1);
+					else /* ROR */
+						index = ror(st->registers[rm], shift_imm);
+					break;
+				}
+				address = (U == 1) ? st->registers[rn] + index : st->registers[rn] - index;
+			}
+			else
+				address = (U == 1) ? st->registers[rn] + st->registers[rm] : st->registers[rn] - st->registers[rm];
+
+			//写回
+			st->registers[rn] = address;
+		}
+	}
+	if (rn == r_pc)
+		address += 4;
+	// }
 	//最终返回地址
 	return address;
 }

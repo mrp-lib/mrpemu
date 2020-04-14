@@ -15,6 +15,7 @@ int main()
 	// printf("\n");
 	// println("int8 %d ~ %d", (int32)(-powl(2, 7)),(int32)(powl(2, 7) - 1));
 	// println("uint8 0~%d", (int32)(powl(2, 8)-1));
+
 	{
 		uint32 a = 0x80000000;
 		uint32 b = 0x00000001;
