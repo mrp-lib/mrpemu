@@ -23,11 +23,11 @@ int main()
 	// println("uint8 0~%d", (int32)(powl(2, 8)-1));
 
 	{
-		uint32 a = 0x00088000;
+		uint32 a = 0x00000001;
+		uint32 b = 0x00000002;
+		uint32 c = a - b;
 
-		uint32 b = (int16)(a & 0x0000ffff);
-
-		println("%d", b);
+		println("%d", c);
 	}
 	println("--------------------->");
 	//打开测试用到的elf文件
