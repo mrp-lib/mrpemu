@@ -28,7 +28,7 @@ build_dirs		:=		$(dir $(build_files))
 $(target): $(build_files)
 	@mkdir -p $(dir $(target))
 	@echo "[LK] -> $@"
-	@$(cc) $(link_flags) -o $@ $^ -lpthread
+	@$(cc) $(link_flags) -o $@ $^ -lpthread -lm
 	@echo "complate!"
 
 # 逐个编译文件

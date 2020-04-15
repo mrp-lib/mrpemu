@@ -22,10 +22,10 @@ int32 arm_inst_qdadd(cpu_state_t *st, uint32 inst)
 	bool issat1, issat2;
 
 	int64 _rn2 = regv(rn) * 2;
-	int32 rn2 = signed_sat(_rn2, int_min(32), int_max(32), &issat1);
+	int32 rn2 = signed_sat(_rn2, 32, &issat1);
 
 	int64 _res = regv(rm) + rn2;
-	regv(rd) = signed_sat(_res, int_min(32), int_max(32), &issat2);
+	regv(rd) = signed_sat(_res, 32, &issat2);
 
 	if (issat1 || issat2)
 	{

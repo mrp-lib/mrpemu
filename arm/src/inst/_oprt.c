@@ -2,22 +2,25 @@
 
 #include "arm.h"
 
-int32 signed_sat(int64 val, int32 min, int32 max, bool *issat)
+int32 signed_sat(int64 val, int32 n, bool *issat)
 {
-	if (val > max)
+	int32 pown = powl(2, n - 1);
+	int32 pown1 = pown - 1;
+
+	if (val < -pown)
 	{
 		*issat = true;
-		return max;
+		return -pown;
 	}
-	else if (val < min)
+	else if (val > pown1)
 	{
 		*issat = true;
-		return min;
+		return pown1;
 	}
 	else
 	{
 		*issat = false;
-		return (int32)val;
+		return val;
 	}
 }
 

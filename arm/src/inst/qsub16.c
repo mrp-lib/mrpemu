@@ -22,10 +22,10 @@ int32 arm_inst_qsub16(cpu_state_t *st, uint32 inst)
 
 	//低位结果
 	int64 resL = bitm(regv(rn), 0, 15) - bitm(regv(rm), 0, 15);
-	uint32 L = signed_sat(resL, int_min(16), int_max(16), &issat);
+	uint32 L = signed_sat(resL, 16, &issat);
 	//高位结果
 	int64 resH = bitm(regv(rn), 16, 31) - bitm(regv(rm), 16, 31);
-	uint32 H = signed_sat(resH, int_min(16), int_max(16), &issat);
+	uint32 H = signed_sat(resH, 16, &issat);
 
 	//结果综合
 	regv(rd) = (H << 16) | L;

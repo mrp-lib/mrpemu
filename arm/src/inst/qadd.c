@@ -22,7 +22,7 @@ int32 arm_inst_qadd(cpu_state_t *st, uint32 inst)
 	bool issat;
 
 	int64 _res = regv(rm) + regv(rn);
-	regv(rd) = signed_sat(_res, int_min(32), int_max(32), &issat);
+	regv(rd) = signed_sat(_res, 32, &issat);
 
 	if (issat)
 	{

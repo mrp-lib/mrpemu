@@ -28,7 +28,7 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand);						//地�
 uint32 addr_mode_2(cpu_state_t *st, uint32 inst);											//地址模式2
 uint32 addr_mode_3(cpu_state_t *st, uint32 inst);											//地址模式3
 void addr_mode_4(cpu_state_t *st, uint32 inst, uint32 *start_address, uint32 *end_address); //地址模式4
-int32 signed_sat(int64 val, int32 min, int32 max, bool *issat);								//有符号饱和处理
+int32 signed_sat(int64 val, int32 n, bool *issat);											//有符号数饱和处理
 uint32 unsigned_sat(int64 val, uint32 max, bool *issat);									//无符号饱和处理
 
 int32 arm_inst_adc(cpu_state_t *st, uint32 inst);
