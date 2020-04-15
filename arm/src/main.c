@@ -5,6 +5,12 @@
 
 #include <math.h>
 
+//中断处理程序
+int32 on_sorftware_interrupt(cpu_state_t *st, uint32 nu)
+{
+	return 0;
+}
+
 int main()
 {
 	// println("int32 %d ~ %d", (int32)(-powl(2, 31)),(int32)(powl(2, 31) - 1));
@@ -78,9 +84,6 @@ int main()
 
 	// mem_st32(mem, 0x8004, 0xe16f1f10); //B --> 到下一条
 	// mem_st32(mem, 0x8008, 0xe3a00011);
-
-	uint32 *res = st->mem->buffer + 0x0010;
-	uint32 *res1 = st->mem->buffer + 0x0012;
 
 	cpu_print_regs(st);
 	while (true)

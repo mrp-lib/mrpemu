@@ -78,6 +78,18 @@ typedef struct
 
 typedef int32 (*arm_inst_func_t)(cpu_state_t *st, uint32 inst); //arm指令处理函数
 
+/*
+ * 软中断处理程序
+ * 参数：
+ * 		st		CPU状态
+ * 		nu		中断号
+ * 返回：
+ * 		0		成功
+ * 		!0		失败
+ * 		* 不过，不管返回什么，CPU依旧继续执行。
+ */
+extern int32 on_sorftware_interrupt(cpu_state_t *st, uint32 nu);
+
 //创建一个CPU并制定内存大小
 cpu_state_t *cpu_create(memory_t *mem);
 
