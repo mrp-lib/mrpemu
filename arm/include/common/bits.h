@@ -5,10 +5,11 @@
 */
 #define _bitm(v, a, b, size) (((v) << ((size) - (b)-1)) >> ((size) - (b)-1 + (a))) //辅助宏
 #define bit1(v, a) (((v) >> (a)) & 0b1)											   //取一个数字的第a位
+#define bitm64(v, a, b) _bitm(v, a, b, 64)										   //取一个64位数字的第[a:b]位
 #define bitm(v, a, b) _bitm(v, a, b, 32)										   //取一个32位数字的第[a:b]位
 #define bitm16(v, a, b) _bitm(v, a, b, 16)										   //取一个16位数字的第[a:b]位
 #define bitm8(v, a, b) _bitm(v, a, b, 8)										   //取一个8位数字的第[a:b]位
-#define bitm4(v, a, b) _bitm(v, a, b, 4)										   //取一个8位数字的第[a:b]位
+#define bitm4(v, a, b) _bitm(v, a, b, 4)										   //取一个4位数字的第[a:b]位
 
 /*
 下面的宏用来处理符号扩展

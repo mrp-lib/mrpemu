@@ -230,8 +230,8 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 					}
 					else if (opxx == 0b0001)
 					{
-						if ((sub_idcode & 0b0010) == 0b0000) //smlaw
-							return call_inst(smlaw);
+						if ((sub_idcode & 0b0010) == 0b0000) //smlaw<y>
+							return call_inst(smlaw_y);
 						else //smulw<y>
 							return call_inst(smulw_y);
 					}
@@ -789,7 +789,7 @@ uint32 psr_stval(cpu_psr_t *psr, uint32 val)
 
 				bxj				cond 0 0 0 1 0 0 1 0 SBO SBO SBO 0 0 1 0 Rm
 				smla<x><y>		cond 0 0 0 1 0 0 0 0 Rd Rn Rs 1 y x 0 Rm
-				smlaw			cond 0 0 0 1 0 0 1 0 Rd Rn Rs 1 y 0 0 Rm
+				smlaw<y>		cond 0 0 0 1 0 0 1 0 Rd Rn Rs 1 y 0 0 Rm
 				smulw<y>		cond 0 0 0 1 0 0 1 0 Rd SBZ Rs 1 y 1 0 Rm
 				smlal<x><y>		cond 0 0 0 1 0 1 0 0 RdHi RdLo Rs 1 y x 0 Rm
 				smul<x><y>		cond 0 0 0 1 0 1 1 0 Rd SBZ Rs 1 y x 0 Rm

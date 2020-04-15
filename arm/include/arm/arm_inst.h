@@ -109,7 +109,7 @@ int32 arm_inst_smlad(cpu_state_t *st, uint32 inst);
 int32 arm_inst_smlal(cpu_state_t *st, uint32 inst);
 int32 arm_inst_smlal_x_y(cpu_state_t *st, uint32 inst);
 int32 arm_inst_smlald(cpu_state_t *st, uint32 inst);
-int32 arm_inst_smlaw(cpu_state_t *st, uint32 inst);
+int32 arm_inst_smlaw_y(cpu_state_t *st, uint32 inst);
 int32 arm_inst_smlsd(cpu_state_t *st, uint32 inst);
 int32 arm_inst_smlsld(cpu_state_t *st, uint32 inst);
 int32 arm_inst_smmla(cpu_state_t *st, uint32 inst);
