@@ -15,8 +15,6 @@ int32 arm_inst_uhaddsubx(cpu_state_t *st, uint32 inst)
 	uint32 rd = inst_b4(12);
 	uint32 rm = inst_b4(0);
 
-	uint32 ge;
-
 	uint32 res0 = bitm(regv(rn), 0, 15) + bitm(regv(rm), 16, 31);
 	uint32 res16 = bitm(regv(rn), 16, 31) + bitm(regv(rm), 0, 15);
 
