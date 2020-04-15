@@ -14,11 +14,24 @@
 #define EXEC_NOT_IMPL 3		 //指令未实现
 #define EXEC_ERROR -1		 //执行失败
 
-#define lsl(val, shift) ((uint32)(val) << (shift))						   //逻辑左移
-#define asl(val, shift) ((val) << (shift))								   //算术左移
-#define lsr(val, shift) ((uint32)(val) >> (shift))						   //逻辑右移
-#define asr(val, shift) ((val) >> (shift))								   //算术右移
-#define ror(val, shift) (lsr(val, shift) | lsl(val, (32 - (shift))))	   //循环右移
+#define lsl8(val, shift) ((uint8)(val) << (shift))					   //8位逻辑左移
+#define asl8(val, shift) ((int8)(val) << (shift))					   //8位算术左移
+#define lsr8(val, shift) ((uint8)(val) >> (shift))					   //8位逻辑右移
+#define asr8(val, shift) ((int8)(val) >> (shift))					   //8位算术右移
+#define ror8(val, shift) (lsr8(val, shift) | lsl8(val, (8 - (shift)))) //8位循环右移
+
+#define lsl16(val, shift) ((uint16)(val) << (shift))					   //16位逻辑左移
+#define asl16(val, shift) ((int16)(val) << (shift))						   //16位算术左移
+#define lsr16(val, shift) ((uint16)(val) >> (shift))					   //16位逻辑右移
+#define asr16(val, shift) ((int16)(val) >> (shift))						   //16位算术右移
+#define ror16(val, shift) (lsr16(val, shift) | lsl16(val, (16 - (shift)))) //16位循环右移
+
+#define lsl(val, shift) ((uint32)(val) << (shift))					 //逻辑左移
+#define asl(val, shift) ((int32)(val) << (shift))					 //算术左移
+#define lsr(val, shift) ((uint32)(val) >> (shift))					 //逻辑右移
+#define asr(val, shift) ((int32)(val) >> (shift))					 //算术右移
+#define ror(val, shift) (lsr(val, shift) | lsl(val, (32 - (shift)))) //循环右移
+
 #define lsl64(val, shift) ((uint64)(val) << (shift))					   //64位逻辑左移
 #define asl64(val, shift) ((int64)(val) << (shift))						   //64位算术左移
 #define lsr64(val, shift) ((uint64)(val) >> (shift))					   //64位逻辑右移

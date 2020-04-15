@@ -3,8 +3,8 @@
 
 #include "arm.h"
 
-#define mem_ld(len, addr) (*(len *)(mem->buffer + addr))
-#define mem_st(len, addr, value) (*(len *)(mem->buffer + addr) = value)
+#define mem_ld(len, addr) (*(len *)(mem->buffer + (addr)))
+#define mem_st(len, addr, value) (*(len *)(mem->buffer + (addr)) = (value))
 
 //创建内存
 memory_t *mem_create(uint32 size)
@@ -45,13 +45,23 @@ void mem_destory(memory_t *mem)
 //获取一个32位的数据
 uint32 mem_ld32(memory_t *mem, uint32 addr)
 {
-	return mem_ld(uint32, addr);
+	uint32 addr_align = (addr >> 2) << 2;	//对齐的地址(32位(4字节，所以除以4)对齐)
+	uint32 addr_shift = (addr & 0b11) << 3; //需要左移的位数 = 偏移的地址*8 (?一个字节8位)
+	//从该地址取出数据
+	uint32 result = mem_ld(uint32, addr_align);
+	//进行循环左移
+	return ror(result, addr_shift);
 }
 
 //获取一个16位的数据
 uint16 mem_ld16(memory_t *mem, uint32 addr)
 {
-	return mem_ld(uint16, addr);
+	uint16 addr_align = (addr >> 1) << 1;	//对齐的地址(16位(2字节，所以除以2)对齐)
+	uint16 addr_shift = (addr & 0b01) << 3; //需要左移的位数 = 偏移的地址*8 (?一个字节8位)
+	//从该地址取出数据
+	uint16 result = mem_ld(uint16, addr_align);
+	//进行循环左移
+	return ror16(result, addr_shift);
 }
 
 //获取一个8位的数据
@@ -63,13 +73,13 @@ uint8 mem_ld8(memory_t *mem, uint32 addr)
 //存储一个32位的数据
 void mem_st32(memory_t *mem, uint32 addr, uint32 value)
 {
-	mem_st(uint32, addr, value);
+	mem_st(uint32, (addr >> 2) << 2, value);
 }
 
 //存储一个16位的数据
 void mem_st16(memory_t *mem, uint32 addr, uint16 value)
 {
-	mem_st(uint16, addr, value);
+	mem_st(uint16, (addr >> 1) << 1, value);
 }
 
 //存储一个8位的数据

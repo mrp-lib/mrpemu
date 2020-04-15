@@ -217,7 +217,7 @@ uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
 	{
 		uint32 immh = inst_b4(8);
 		uint32 imml = inst_b4(0);
-		uint32 offset_8 = (immh << 4) | immh;
+		uint32 offset_8 = (immh << 4) | imml;
 		if (pw == 0b00)
 		{
 			address = st->registers[rn];

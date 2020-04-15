@@ -79,6 +79,9 @@ int main()
 	// mem_st32(mem, 0x8004, 0xe16f1f10); //B --> 到下一条
 	// mem_st32(mem, 0x8008, 0xe3a00011);
 
+	uint32 *res = st->mem->buffer + 0x0010;
+	uint32 *res1 = st->mem->buffer + 0x0012;
+
 	cpu_print_regs(st);
 	while (true)
 	{
