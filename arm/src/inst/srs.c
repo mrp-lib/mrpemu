@@ -2,7 +2,7 @@
 
 int32 arm_inst_srs(cpu_state_t *st, uint32 inst)
 {
-	loginst("srs", inst);
+	loginst("*srs", inst);
 
 	//sbz
 	// if (inst_bm(5, 7) != 0 || inst_b4(12) != 0)

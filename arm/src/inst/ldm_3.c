@@ -30,5 +30,5 @@ int32 arm_inst_ldm_3(cpu_state_t *st, uint32 inst)
 	//设置pc
 	st->registers[r_pc] = mem_ld32(st->mem, address);
 
-	return EXEC_NOT_IMPL;
+	return EXEC_SUCCESS;
 }

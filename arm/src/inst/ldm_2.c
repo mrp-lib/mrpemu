@@ -27,5 +27,5 @@ int32 arm_inst_ldm_2(cpu_state_t *st, uint32 inst)
 		}
 	}
 
-	return EXEC_NOT_IMPL;
+	return EXEC_SUCCESS;
 }
