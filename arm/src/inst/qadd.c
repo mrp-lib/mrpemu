@@ -21,7 +21,8 @@ int32 arm_inst_qadd(cpu_state_t *st, uint32 inst)
 
 	bool issat;
 
-	int64 _res = regv(rm) + regv(rn);
+	int64 _res = (int64)(int32)regv(rm) + (int32)regv(rn);
+	loge("%x + %x = %Lx", regv(rm), regv(rn), _res);
 	regv(rd) = signed_sat(_res, 32, &issat);
 
 	if (issat)

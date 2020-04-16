@@ -1,6 +1,5 @@
 #include "arm.h"
 
-//adc指令
 int32 arm_inst_bic(cpu_state_t *st, uint32 inst)
 {
 	loginst("bic", inst);
