@@ -14,9 +14,9 @@ int32 arm_inst_smmul(cpu_state_t *st, uint32 inst)
 
 	uint64 value;
 	if (r == 1)
-		value = (int32)regv(rm) * (int32)regv(rs) + 0x80000000;
+		value = (int64)(int32)regv(rm) * (int32)regv(rs) + 0x80000000;
 	else
-		value = (int32)regv(rm) * (int32)regv(rs);
+		value = (int64)(int32)regv(rm) * (int32)regv(rs);
 
 	regv(rd) = value >> 32;
 

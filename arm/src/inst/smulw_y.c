@@ -18,7 +18,7 @@ int32 arm_inst_smulw_y(cpu_state_t *st, uint32 inst)
 
 	int16 operand = (y == 0) ? bitm(regv(rs), 0, 15) : bitm(regv(rs), 16, 31);
 
-	uint64 mul_res = (int32)regv(rm) * operand;
+	uint64 mul_res = (int64)(int32)regv(rm) * operand;
 
 	regv(rd) = bitm64(mul_res, 16, 47);
 

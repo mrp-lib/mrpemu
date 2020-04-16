@@ -13,7 +13,7 @@ int32 arm_inst_smull(cpu_state_t *st, uint32 inst)
 	uint32 rm = inst_b4(0);
 	uint32 s = inst_b1(20);
 
-	uint64 res_mul = (int32)regv(rm) * (int32)regv(rs);
+	uint64 res_mul = (int64)(int32)regv(rm) * (int32)regv(rs);
 
 	uint32 resh = regv(rdh) = res_mul >> 32;
 	uint32 resl = regv(rdl) = res_mul & 0x00000000ffffffff;
