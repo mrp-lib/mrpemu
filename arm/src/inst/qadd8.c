@@ -22,14 +22,14 @@ int32 arm_inst_qadd8(cpu_state_t *st, uint32 inst)
 
 	//低位结果
 	int16 resLL = (int16)(int8)bitm(regv(rm), 0, 7) + (int8)bitm(regv(rn), 0, 7);
-	uint32 LL = signed_sat(resLL, 8, &issat);
+	uint8 LL = signed_sat(resLL, 8, &issat);
 	int16 resLH = (int16)(int8)bitm(regv(rm), 8, 15) + (int8)bitm(regv(rn), 8, 15);
-	uint32 LH = signed_sat(resLH, 8, &issat);
+	uint8 LH = signed_sat(resLH, 8, &issat);
 	//高位结果
 	int16 resHL = (int16)(int8)bitm(regv(rm), 16, 23) + (int8)bitm(regv(rn), 16, 23);
-	uint32 HL = signed_sat(resHL, 8, &issat);
+	uint8 HL = signed_sat(resHL, 8, &issat);
 	int16 resHH = (int16)(int8)bitm(regv(rm), 24, 31) + (int8)bitm(regv(rn), 24, 31);
-	uint32 HH = signed_sat(resHH, 8, &issat);
+	uint8 HH = signed_sat(resHH, 8, &issat);
 
 	//结果综合
 	regv(rd) = (HH << 24) | (HL << 16) | (LH << 8) | LL;
