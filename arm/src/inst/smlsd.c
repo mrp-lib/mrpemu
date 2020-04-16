@@ -15,8 +15,8 @@ int32 arm_inst_smlsd(cpu_state_t *st, uint32 inst)
 
 	uint32 operand = (x == 1) ? ror(regv(rs), 16) : regv(rs);
 
-	int32 product1 = (int16)bitm(regv(rm), 0, 15) * (int16)bitm(operand, 0, 15);
-	int32 product2 = (int16)bitm(regv(rm), 16, 31) * (int16)bitm(operand, 16, 31);
+	int32 product1 = (int32)(int16)bitm(regv(rm), 0, 15) * (int16)bitm(operand, 0, 15);
+	int32 product2 = (int32)(int16)bitm(regv(rm), 16, 31) * (int16)bitm(operand, 16, 31);
 
 	uint32 diffofproducts = product1 - product2;
 

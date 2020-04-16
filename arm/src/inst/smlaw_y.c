@@ -24,11 +24,3 @@ int32 arm_inst_smlaw_y(cpu_state_t *st, uint32 inst)
 
 	return EXEC_SUCCESS;
 }
-
-// if (y == 0) then
-// operand2 = SignExtend(Rs[15:0])
-// else /* y == 1 */
-// operand2 = SignExtend(Rs[31:16])
-// Rd = (Rm * operand2)[47:16] + Rn /* Signed multiplication */
-// if OverflowFrom((Rm * operand2)[47:16] + Rn) then
-// Q Flag = 1
