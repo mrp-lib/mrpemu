@@ -13,7 +13,7 @@ int32 arm_inst_smlal(cpu_state_t *st, uint32 inst)
 	uint32 rm = inst_b4(0);
 	uint32 s = inst_b1(20);
 
-	int64 res = (int64)regv(rs) * (int64)regv(rm) + (int32)regv(rdl);
+	int64 res = (int64)(int32)regv(rs) * (int64)(int32)regv(rm) + (uint32)regv(rdl);
 	uint32 resl = regv(rdl) = res;
 	uint32 resh = regv(rdh) = (res >> 32) + (int32)regv(rdh);
 

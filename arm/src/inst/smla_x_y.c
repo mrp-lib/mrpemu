@@ -15,8 +15,8 @@ int32 arm_inst_smla_x_y(cpu_state_t *st, uint32 inst)
 	uint32 x = inst_b1(5);
 	uint32 y = inst_b1(6);
 
-	int16 operand1 = sign_extend((x == 0 ? bitm(regv(rm), 0, 15) : bitm(regv(rm), 16, 31)), 16);
-	int16 operand2 = sign_extend((y == 0 ? bitm(regv(rs), 0, 15) : bitm(regv(rs), 16, 31)), 16);
+	int16 operand1 = (x == 0) ? (int16)bitm(regv(rm), 0, 15) : (int16)bitm(regv(rm), 16, 31);
+	int16 operand2 = (y == 0) ? (int16)bitm(regv(rs), 0, 15) : (int16)bitm(regv(rs), 16, 31);
 
 	uint32 operand = operand1 * operand2;
 	uint32 result = regv(rd) = operand + regv(rn);
