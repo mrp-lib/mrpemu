@@ -1,4 +1,6 @@
 //这个文件中定义了相关位操作的宏
+#ifndef _COMMON_BITS_H__
+#define _COMMON_BITS_H__
 
 /*
 下面的宏用来从数字中取出某些特定位
@@ -17,7 +19,7 @@
 */
 #define val_bits(val) ((uint32)sizeof(val) << 3)												//通过数字类型类型计算一个数字的位数
 #define sign_extend(val, val_bits) (((int32)((val) << (32 - (val_bits)))) >> (32 - (val_bits))) //带符号扩展，传递值和值当前的位数
-#define sign_extend_e(val) (((int32)((val) << (32 - val_bits(val)))) >> (32 - val_bits(val)))		//带符号扩展，传递值和值当前的位数 (注意：如果val的位数不是8、16请调用sign_extend手动传递位数)
+#define sign_extend_e(val) (((int32)((val) << (32 - val_bits(val)))) >> (32 - val_bits(val)))	//带符号扩展，传递值和值当前的位数 (注意：如果val的位数不是8、16请调用sign_extend手动传递位数)
 
 /*
 下面的命令用来简化指令读取
@@ -28,3 +30,5 @@
 #define inst_b8(from) inst_bm(from, from + 7)	//读取指令的某8位
 #define inst_b16(from) inst_bm(from, from + 15) //读取指令的某16位
 #define inst_b24(from) inst_bm(from, from + 23) //读取指令的某24位
+
+#endif

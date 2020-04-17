@@ -3,7 +3,11 @@
 
 #include <stdbool.h>
 
+#ifndef __cplusplus
 #define null ((void *)0)
+#else
+#define null 0
+#endif
 
 typedef long long int64;
 typedef unsigned long long uint64;
@@ -16,7 +20,6 @@ typedef unsigned short uint16;
 
 typedef char int8;
 typedef unsigned char uint8;
-
 
 #define int32_min (-2147483648)
 #define int32_max (2147483647)

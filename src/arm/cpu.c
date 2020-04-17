@@ -11,7 +11,7 @@ cpu_state_t *cpu_create(memory_t *mem)
 	logi("cpu_create(size=%p)", mem);
 
 	//创建CPU状态
-	cpu_state_t *cpuState = malloc(sizeof(cpu_state_t));
+	cpu_state_t *cpuState = (cpu_state_t *)malloc(sizeof(cpu_state_t));
 	if (cpuState != null)
 	{
 		memset(cpuState, 0, sizeof(cpu_state_t));

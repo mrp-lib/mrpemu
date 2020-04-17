@@ -11,11 +11,11 @@ memory_t *mem_create(uint32 size)
 {
 	logi("mem_create(size=0x%08x)", size);
 
-	uint8 *buffer = malloc(size);
+	uint8 *buffer = (uint8 *)malloc(size);
 	if (buffer == null)
 		return null;
 
-	memory_t *mem = malloc(sizeof(memory_t));
+	memory_t *mem = (memory_t *)malloc(sizeof(memory_t));
 	if (mem == null)
 	{
 		free(buffer);

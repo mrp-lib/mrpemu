@@ -1,5 +1,5 @@
-#ifndef _ELF_H__
-#define _ELF_H__
+#ifndef __HELPER_ELF_H__
+#define __HELPER_ELF_H__
 
 #include "stdio.h"
 #include "common/type.h"

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "elf.h"
+#include "helper/elf.h"
 
 #define elf_ok(elf) (elf != null && elf->fp != null)
 
@@ -14,7 +14,7 @@ elf_t *elf_open(char *filename)
 	if (fp == null)
 		return null;
 
-	elf_t *elf = malloc(sizeof(elf_t));
+	elf_t *elf = (elf_t *)malloc(sizeof(elf_t));
 	if (elf == null)
 	{
 		fclose(fp);
@@ -119,8 +119,6 @@ uint32 elf_read_sec_heads(elf_t *elf, elf_head_t *head, elf_sec_head_t *shs)
 	}
 	return -1;
 }
-
-//获取名称
 
 //打印段头
 void elf_print_sec_head(elf_t *elf, elf_head_t *head, elf_sec_head_t *shs, uint32 index, bool has_th)

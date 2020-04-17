@@ -56,6 +56,9 @@
 		"gb2312.h": "c",
 		"time.h": "c",
 		"gzip.h": "c",
-		"__locale": "c"
+		"__locale": "c",
+		"stdlib.h": "c",
+		"math.h": "c",
+		"util.h": "c"
 	}
 }
