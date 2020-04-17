@@ -17,7 +17,7 @@ int32 arm_inst_usub8(cpu_state_t *st, uint32 inst)
 
 	uint32 ge;
 
-	uint32 res0 = bitm(regv(rn), 0, 7) - bitm(regv(rm), 0, 7);
+	uint32 res0 = (bitm(regv(rn), 0, 7) - bitm(regv(rm), 0, 7));
 	ge |= !borrow8(res0);
 	uint32 res8 = bitm(regv(rn), 8, 15) - bitm(regv(rm), 8, 15);
 	ge |= !borrow8(res8) << 1;
@@ -26,7 +26,7 @@ int32 arm_inst_usub8(cpu_state_t *st, uint32 inst)
 	uint32 res24 = bitm(regv(rn), 24, 31) - bitm(regv(rm), 24, 31);
 	ge |= !borrow8(res24) << 3;
 
-	regv(rd) = res0 | (res8 << 8) | (res16 << 16) | (res24 << 24);
+	regv(rd) = (res0 & 0x00ff) | ((res8 << 8) & 0x00ff) | ((res16 << 16) & 0x00ff) | ((res24 << 24) & 0x00ff);
 
 	return EXEC_SUCCESS;
 }

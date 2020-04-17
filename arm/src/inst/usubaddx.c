@@ -24,7 +24,7 @@ int32 arm_inst_usubaddx(cpu_state_t *st, uint32 inst)
 	if (borrow16(res16))
 		ge |= 0b1100;
 
-	regv(rd) = res0 | (res16 << 16);
+	regv(rd) = (res0 & 0x0000ffff) | ((res16 << 16) & 0x0000ffff);
 
 	return EXEC_SUCCESS;
 }

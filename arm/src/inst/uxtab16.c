@@ -16,7 +16,7 @@ int32 arm_inst_uxtab16(cpu_state_t *st, uint32 inst)
 	uint32 rm = inst_b4(0);
 	uint32 rotate = inst_bm(10, 11);
 
-	uint32 operand = ror(regv(rm), rotate << 3) & 0x000000ff;
+	uint32 operand = ror(regv(rm), rotate << 3) & 0x00ff00ff;
 	uint16 resl = (uint16)bitm(regv(rn), 0, 15) + (uint16)bitm(operand, 0, 15);
 	uint16 resh = (uint16)bitm(regv(rn), 16, 31) + (uint16)bitm(operand, 16, 31);
 

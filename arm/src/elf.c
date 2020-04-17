@@ -129,25 +129,11 @@ void elf_print_sec_head(elf_t *elf, elf_head_t *head, elf_sec_head_t *shs, uint3
 	if (sh != null)
 	{
 		if (has_th)
-			printf("[Nr] Name              Type            Addr      Off       Size      Flg\n");
+			printf("[Nr] Name              Addr      Off       Size      Flg\n");
 
 		if (sh != null)
 		{
 			char name[16] = {0};
-			char type_dict[][14] = {
-				"NULL",
-				"PROGBITS",
-				"SYMTAB",
-				"STRTAB",
-				"RELA",
-				"HASH",
-				"DYNAMIC",
-				"NOTE",
-				"NOBITS",
-				"REL",
-				"SHLIB",
-				"DNYSYM",
-			};
 			char flag[4] = {0};
 
 			//读取名称
@@ -163,17 +149,14 @@ void elf_print_sec_head(elf_t *elf, elf_head_t *head, elf_sec_head_t *shs, uint3
 			}
 
 			//取得TAG
-			uint32 flgs[] = {SHF_WRITE, SHF_ALLOC, SHF_EXECINSTR};
-			char *flag_dict = "WAX";
-			for (uint32 i = 0; i < sizeof(flgs) / sizeof(uint32); i++)
-			{
-				if (sh->sh_flags & flgs[i])
-				{
-					sprintf(flag, "%s%c", flag, flag_dict[i]);
-				}
-			}
+			if ((sh->sh_flags & SHF_WRITE) == SHF_WRITE)
+				sprintf(flag, "%s%c", flag, 'W');
+			if ((sh->sh_flags & SHF_ALLOC) == SHF_ALLOC)
+				sprintf(flag, "%s%c", flag, 'A');
+			if ((sh->sh_flags & SHF_EXECINSTR) == SHF_EXECINSTR)
+				sprintf(flag, "%s%c", flag, 'X');
 
-			printf("[%2d] %-16.16s  %-14.14s  %-8x  %-8x  %-8x  %3s\n", index, name, type_dict[sh->sh_type], sh->sh_addr, sh->sh_offset, sh->sh_size, flag);
+			printf("[%2d] %-16.16s  %-8x  %-8x  %-8x  %3s\n", index, name, sh->sh_addr, sh->sh_offset, sh->sh_size, flag);
 		}
 	}
 }
