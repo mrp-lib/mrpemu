@@ -17,10 +17,10 @@ int32 arm_inst_uadd16(cpu_state_t *st, uint32 inst)
 
 	uint32 ge;
 
-	uint32 res0 = bitm(regv(rn), 0, 15) + bitm(regv(rm), 0, 15);
+	uint32 res0 = (bitm(regv(rn), 0, 15) + bitm(regv(rm), 0, 15)) & 0x0000ffff;
 	if (carry16(res0))
 		ge |= 0b0011;
-	uint32 res16 = bitm(regv(rn), 16, 31) + bitm(regv(rm), 16, 31);
+	uint32 res16 = (bitm(regv(rn), 16, 31) + bitm(regv(rm), 16, 31)) & 0x0000ffff;
 	if (carry16(res16))
 		ge |= 0b1100;
 
