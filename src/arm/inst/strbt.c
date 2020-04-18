@@ -12,6 +12,8 @@ int32 arm_inst_strbt(cpu_state_t *st, uint32 inst)
 	uint32 address = addr_mode_2(st, inst);
 	uint32 rd = inst_b4(12);
 
+	println("strbt: %d ->r %d", rd, address);
+
 	//这个和strb一样的吧？？
 
 	mem_st8(st->mem, address, regv(rd) & 0x00ff);

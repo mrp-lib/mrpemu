@@ -16,6 +16,8 @@ int32 arm_inst_ldrbt(cpu_state_t *st, uint32 inst)
 	uint32 rn = inst_b4(16);
 	uint32 rd = inst_b4(12);
 
+	println("ldrbt: %d ->r %d", addr, rd);
+
 	if (rd == r_pc)
 		return EXEC_UNPREDICTABLE;
 

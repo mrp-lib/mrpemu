@@ -12,6 +12,8 @@ int32 arm_inst_strd(cpu_state_t *st, uint32 inst)
 	uint32 address = addr_mode_3(st, inst);
 	uint32 rd = inst_b4(12);
 
+	println("strd: %d ->r %d", rd, address);
+
 	if (even(regv(rd)) && rd != 14 && bitm(address, 0, 1) == 0b00)
 	{
 		mem_st32(st->mem, address, regv(rd));

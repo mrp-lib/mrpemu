@@ -18,6 +18,8 @@ int32 arm_inst_ldrb(cpu_state_t *st, uint32 inst)
 	// uint32 p = inst_b1(24);
 	// uint32 w = inst_b1(21);
 
+	println("ldrb: %d ->r %d", addr, rd);
+
 	if (rd == r_pc)
 		return EXEC_UNPREDICTABLE;
 
