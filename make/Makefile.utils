@@ -1,0 +1,33 @@
+include make/Makefile.cfg
+
+# 目标库，一般由外面的Makefile传过来
+TARGET			?=	$(BUILD_DIR)/utils.o
+
+# 构建名称
+MAKE_NAME		:=	utils
+
+# 特定的头文件目录
+INCLUDE_DIRS	:=	
+
+# 编译选项扩展，如果有必要则添加
+CC_FLAGS_EX		:= 	$(CC_FLAGS) $(addprefix -I, $(INCLUDE_DIRS))
+
+
+# 编译前的相关文件路径处理
+C_FILES			:= $(shell find $(SRC_DIR)/$(MAKE_NAME) -name '*.c')
+C_FILE_NAMES 	:= $(C_FILES:$(SRC_DIR)/$(MAKE_NAME)/%=%)
+C_BUILD_FILES 	:= $(addprefix $(BUILD_DIR)/$(MAKE_NAME)/, $(C_FILE_NAMES:%.c=%.o))
+
+
+# 将之前生成的所有的.o文件合并成一个
+$(TARGET): $(C_BUILD_FILES)
+	@mkdir -p $(dir $@)
+	@echo "[LD utils] $(BUILD_DIR)/$(MAKE_NAME)/*.o -> $@"
+	@$(LD) -r $^ -o $@
+
+
+# 逐个编译文件
+$(C_BUILD_FILES): $(BUILD_DIR)/$(MAKE_NAME)/%.o : $(SRC_DIR)/$(MAKE_NAME)/%.c
+	@mkdir -p $(dir $@)
+	@echo "[CC utils] $< -> $@"
+	@$(CC) -c $(CC_FLAGS_EX) -o $@ $<

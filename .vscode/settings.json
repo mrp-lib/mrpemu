@@ -59,6 +59,9 @@
 		"__locale": "c",
 		"stdlib.h": "c",
 		"math.h": "c",
-		"util.h": "c"
+		"util.h": "c",
+		"elf.h": "c",
+		"iconv.h": "c",
+		"arm.h": "c"
 	}
 }

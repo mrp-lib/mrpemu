@@ -8,7 +8,7 @@
 			"name": "C++ Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceRoot}/bin/arm",
+			"program": "${workspaceRoot}/bin/mrpemu",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceRoot}",

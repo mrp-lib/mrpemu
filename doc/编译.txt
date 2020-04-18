@@ -1,0 +1,3 @@
+windows下的编译
+
+mingw32-make CMD_MAKE=mingw32-make CMD_FIND=C:\Application\Git\Git\usr\bin\find.exe CC=mingw32-gcc

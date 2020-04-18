@@ -1,0 +1,23 @@
+include make/Makefile.cfg
+
+TARGET			?=	$(BUILD_DIR)/zlib.o
+
+OBJ_DIR			=	$(THIRD_DIR)/zlib
+ZLIB_DIR		=	libs/zlib
+
+CC_FLAGS_EX		=	$(CC_FLAGS)
+
+OBJZ = adler32.o crc32.o deflate.o infback.o inffast.o inflate.o inftrees.o trees.o zutil.o
+OBJG = compress.o uncompr.o gzclose.o gzlib.o gzread.o gzwrite.o
+OBJC = $(addprefix $(OBJ_DIR)/, $(OBJZ) $(OBJG))
+
+
+$(TARGET): $(OBJC)
+	@mkdir -p $(dir $@)
+	@echo "[LD zlib] $(ZLIB_DIR)/*.o -> $@"
+	@$(LD) -r $^ -o $@
+
+$(OBJC): $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
+	@mkdir -p $(dir $@)
+	@echo "[CC zlib] $< -> $@"
+	@$(CC) -c $(CC_FLAGS_EX) -o $@ $<

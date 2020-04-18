@@ -1,0 +1,1 @@
+rm -rf bin/mrpemu* .build/*.o && make DEBUG=TRUE
