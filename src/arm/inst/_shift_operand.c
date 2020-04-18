@@ -8,6 +8,7 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 	bool shifter_carry_out;
 	//取得指令的I位(25)
 	uint32 I = inst_b1(25);
+	uint32 rn = inst_b4(16);
 	//如果I位为1表示立即数偏移
 	if (I == 1)
 	{
@@ -194,6 +195,9 @@ bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand)
 			}
 		}
 	}
+	//特别处理pc
+	if (rn == r_pc)
+		shifter_operand += 4; //文档是+8的，不过这里不一样
 	//OK，返回结果
 	*operand = shifter_operand;
 	return !!shifter_carry_out;
