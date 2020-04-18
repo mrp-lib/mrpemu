@@ -1,21 +1,87 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "arm.h"
-#include "helper/elf.h"
+#include <unistd.h>
 
 #include <math.h>
+
+#include "helper/elf.h"
+#include "arm.h"
+#include "mrp.h"
+#include "utils/array.h"
+#include "utils/gzip.h"
 
 #define memSize 0x200000 //1024 * 1024 * 2;
 
 //中断处理程序
 int32 on_sorftware_interrupt(cpu_state_t *st, uint32 nu)
 {
+	println("产生中断:%d", nu);
 	return 0;
 }
 
-int main()
+int32 test_mrp()
 {
+	char *file = "sdcard/mythroad/hello.mrp";
+
+	//获取mrp
+	mrp_reader_t *reader = mrp_open(file);
+	mrp_file_info *cfile = mrp_file(reader, "cfunction.ext");
+	uint8 *cfileData = malloc(cfile->size);
+	mrp_read(reader, "cfunction.ext", cfileData);
+
+	uint32 dLen;
+	uint8 *dst = ungzip(cfileData, cfile->size, null, &dLen);
+
+	println("gzip, len=%d", dLen);
+
+	//创建虚拟机
+	vm_info_t *vm = vm_create(1024 * 400);
+	vm_install_func(vm); //安装函数
+	//载入内存
+	uint8 *addr = vm_mem_alloc(vm, dLen);
+	memcpy(addr, dst, dLen);
+	*(uint32 *)addr = (uint32)vm_mem_offset(vm->mem->mr_func_tab);
+
+	//加载
+	cpu_state_t *cpu = vm->cpu;
+	cpu->registers[r_pc] = addr - cpu->mem->buffer + 8;
+	cpu->registers[r_sp] = vm->mem->stack - cpu->mem->buffer;
+
+	println("MRP Load Info:");
+	println("\t CODE ADDRESS:   %ld", addr - cpu->mem->buffer + 8);
+	println("\t CFUNC ADDRESS:  %ld", addr - cpu->mem->buffer);
+	println("\t STACH ADDRESS:  %ld", vm->mem->stack - cpu->mem->buffer);
+
+	cpu_print_regs(cpu);
+	while (true)
+	{
+		uint32 inst = cpu_fetch_inst(cpu);
+		println("inst: 0x%08x", inst);
+		cpu_exec_inst(cpu, inst);
+		cpu_print_regs(cpu);
+	}
+
+	vm_free(vm);
+
+	return 0;
+}
+
+int main(int32 argc, char **argv)
+{
+	{
+		// char cwd[1024] = {0};
+		// getcwd(cwd, 1024);
+		// println("CWD: %s", cwd);
+		// println("ARGS:");
+		// for (uint32 i = 0; i < argc; i++)
+		// {
+		// 	println("\t[%2d]  %s", i + 1, *(argv + i));
+		// }
+	}
+	// println("%s");
+	return test_mrp();
+
 	//打开测试用到的elf文件
 	elf_head_t head;
 	elf_sec_head_t *secs;

@@ -60,7 +60,7 @@ void cpu_print_regs(cpu_state_t *st)
 	for (uint32 i = 0; i < 4; i++)
 		ge_buf[i] = bit1(st->cpsr.ge, i) ? '1' : '0';
 
-	char *mode_p;
+	char *mode_p = "";
 	switch (st->cpsr.mode)
 	{
 	case 0b10000:
