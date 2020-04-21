@@ -254,6 +254,8 @@ uint32 addr_mode_3(cpu_state_t *st, uint32 inst)
 		}
 		//其他是错的
 	}
+	if (rn == r_pc)
+		address += 4;
 	//把地址返回出去
 	return address;
 }

@@ -24,7 +24,7 @@ bool check_cond(cpu_state_t *st, uint32 inst)
 	case 0x00000008: //hi
 		return st->cpsr.c && !st->cpsr.z;
 	case 0x00000009: //ls
-		return !st->cpsr.c && st->cpsr.z;
+		return !st->cpsr.c || st->cpsr.z;
 	case 0x0000000a: //ge
 		return st->cpsr.n == st->cpsr.v;
 	case 0x0000000b: //lt
