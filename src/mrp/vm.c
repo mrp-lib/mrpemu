@@ -34,7 +34,7 @@ static int16 c_func_tab[] = {
 	DATAP_RESERVE,
 
 	DATAP_C_INTERNAL_TABLE,
-	DATA_C_PORT_TABLE,
+	DATAP_C_PORT_TABLE,
 	SWI_MR_C_FUNCTION_NEW,
 
 	SWI_MR_PRINTF,
@@ -109,33 +109,33 @@ static int16 c_func_tab[] = {
 	SWI_MR_SEND,
 	SWI_MR_SENDTO,
 
-	DATA_SCREENBUF,
-	DATA_SCREENWIDTH,
-	DATA_SCREENHEIGHT,
-	DATA_SCREENBIT,
-	DATA_BITMAP,
-	DATA_TILE,
-	DATA_MAP,
-	DATA_SOUND,
-	DATA_SPRITE,
+	DATAP_SCREENBUF,
+	DATAP_SCREENWIDTH,
+	DATAP_SCREENHEIGHT,
+	DATAP_SCREENBIT,
+	DATAP_BITMAP,
+	DATAP_TILE,
+	DATAP_MAP,
+	DATAP_SOUND,
+	DATAP_SPRITE,
 
-	DATA_PACK_FILENAME,
-	DATA_START_FILENAME,
-	DATA_OLD_PACK_FILENAME,
-	DATA_OLD_START_FILENAME,
+	DATAP_PACK_FILENAME,
+	DATAP_START_FILENAME,
+	DATAP_OLD_PACK_FILENAME,
+	DATAP_OLD_START_FILENAME,
 
-	DATA_RAM_FILE,
-	DATA_RAM_FILE_LEN,
+	DATAP_RAM_FILE,
+	DATAP_RAM_FILE_LEN,
 
-	DATA_SOUNDON,
-	DATA_SHAKEON,
+	DATAP_SOUNDON,
+	DATAP_SHAKEON,
 
-	DATA_LG_MEM_BASE,
-	DATA_LG_MEM_LEN,
-	DATA_LG_MEM_END,
-	DATA_LG_MEM_LEFT,
+	DATAP_LG_MEM_BASE,
+	DATAP_LG_MEM_LEN,
+	DATAP_LG_MEM_END,
+	DATAP_LG_MEM_LEFT,
 
-	DATA_SMS_CFG_BUF,
+	DATAP_SMS_CFG_BUF,
 
 	SWI_MR_MD5_INIT,
 	SWI_MR_MD5_APPEND,
@@ -162,18 +162,18 @@ static int16 c_func_tab[] = {
 	SWI_MR_DIV,
 	SWI_MR_MOD,
 
-	DATA_LG_MEM_MIN,
-	DATA_LG_MEM_TOP,
+	DATAP_LG_MEM_MIN,
+	DATAP_LG_MEM_TOP,
 	SWI_MR_UPDCRC,
-	DATA_START_FILE_PARAMETER,
-	DATA_SMS_RETURN_FLAG,
-	DATA_SMS_RETURN_VAL,
+	DATAP_START_FILE_PARAMETER,
+	DATAP_SMS_RETURN_FLAG,
+	DATAP_SMS_RETURN_VAL,
 	SWI_MR_UNZIP,
-	DATA_EXIT_CB,
-	DATA_EXIT_CB_DATA,
-	DATA_ENTRY,
+	DATAP_EXIT_CB,
+	DATAP_EXIT_CB_DATA,
+	DATAP_ENTRY,
 	SWI_MR_PLATDRAWCHAR,
-	DATA_LG_MEM_FREE,
+	DATAP_LG_MEM_FREE,
 	SWI_MR_TRANSBITMAPDRAW,
 	SWI_MR_DRAWREGION,
 };
@@ -206,20 +206,16 @@ vm_info_t *vm_create(uint32 memSize)
 		cpu_destory(cpu);
 		return null;
 	}
+	memset(vm, 0, sizeof(vm_info_t));
 
 	//初始化
-	memMap->sys_info.vmaddr = (uint64)vm;								 //保存虚拟机地址
-	vm->mem = memMap;													 //保存内存图
-	vm->cpu = cpu;														 //保存CPU信息
-	vm->heap_start = mem->buffer + VM_MEM_OFFSET + sizeof(vm_mem_map_t); //计算一下堆内存的开始地址
-	vm->heap_end = mem->buffer + cpu_mem_size;							 //计算一下堆内存的结束地址
+	memMap->vmaddr = (uint64)vm;		//保存虚拟机地址
+	vm->mem = memMap;					//保存内存映射
+	vm->cpu = cpu;						//保存CPU信息
+	gettimeofday(&vm->startTime, NULL); //初始化创建时间
 
-	//内存初始化
-	uint32 mem_blks = vm->heap_blks = (vm->heap_end - vm->heap_start) / VM_MEM_BLOCK_SIZE; //内存块总数
-	vm->heap_size = mem_blks * VM_MEM_BLOCK_SIZE;										   //可用内存大小
-	vm->heap_blk_tb = (uint8 *)malloc(8 * mem_blks);									   //内存块表初始化，内存块数*每个块用8个字节描述（为了方便就这样了）
-	memset(vm->heap_blk_tb, 0, 8 * mem_blks);											   //初始化，标记全部为空闲
-	vm->heap_free = vm->heap_size;														   //剩余为全部内存
+	//设置一下虚拟机的栈，由于栈是从高往第的，所以SP指向栈的最后一个地址
+	vm->cpu->registers[r_sp] = vm_mem_offset(vm->mem->stack + VM_STACK_SIZE);
 
 	//返回出去
 	return vm;
@@ -244,96 +240,6 @@ void vm_free(vm_info_t *vm)
 
 	//释放虚拟机
 	free(vm);
-}
-
-uint8 *vm_mem_alloc(vm_info_t *vm, int32 len)
-{
-	logi("vm_mem_alloc(vm=%p, len=%d)", vm, len);
-
-	uint32 need = (len + VM_MEM_BLOCK_SIZE - 1) / VM_MEM_BLOCK_SIZE; //计算需要的连续快
-	uint32 found = 0;												 //已找到了的连续快数量
-	uint32 start = 0;												 //开始块位置
-
-	//开始寻找
-	for (uint32 i = 0; i < vm->heap_blks; i++)
-	{
-		uint8 *blki = vm->heap_blk_tb + i; //块信息
-		//空闲块
-		if (*blki == 0)
-		{
-			if (found == 0)
-				start = i;
-			found++;
-			//看看是否够了
-			if (found == need)
-			{
-				//标记这些块被分配
-				uint32 endBlk = start + found;
-				for (uint32 j = start; j < endBlk; j++)
-					*(vm->heap_blk_tb + j) = VM_MEM_BLK_USD;
-
-				*(vm->heap_blk_tb + start) |= VM_MEM_BLK_BEG; //标记第一块位位先导
-
-				//将偏移返回
-				return vm->heap_start + start * VM_MEM_BLOCK_SIZE;
-			}
-		}
-		//非空闲块
-		else
-			found = 0;
-	}
-
-	//找了半天，没有合适的
-	return null;
-}
-
-bool vm_mem_free(vm_info_t *vm, uint8 *mem)
-{
-	logi("vm_mem_free(vm=%p, mem=%p)", vm, mem);
-	uint32 offset = mem - vm->heap_start;	  //相对于堆内存的偏移
-	uint32 blkN = offset / VM_MEM_BLOCK_SIZE; //所在块位置
-	//超出了
-	if (blkN >= vm->heap_blks)
-		return false;
-
-	uint8 *blk = vm->heap_blk_tb + blkN; //内存块
-
-	//是一个空闲块，不处理
-	if (*blk == 0)
-		return false;
-
-	//如果不是先导块则继续往后看
-	if ((*blk & VM_MEM_BLK_BEG) != VM_MEM_BLK_BEG)
-	{
-		bool finded = false;
-		for (uint32 i = blkN - 1; i >= 0; i--)
-		{
-			blk = vm->heap_blk_tb + i;
-			if ((*blk & VM_MEM_BLK_BEG) == VM_MEM_BLK_BEG)
-			{
-				blkN = i;
-				finded = true;
-				break;
-			}
-		}
-		//没有找到？？
-		if (!finded)
-			return false;
-	}
-
-	//开始释放内存
-	while (true)
-	{
-		//释放并指向下一块
-		*blk = 0;
-		blk++;
-		//如果遇到空闲块或者是开始块表示释放完成了
-		if ((*blk == 0) || ((*blk & VM_MEM_BLK_BEG) == VM_MEM_BLK_BEG))
-		{
-			println("END");
-			break;
-		}
-	}
 }
 
 /*
@@ -368,9 +274,116 @@ void vm_install_func(vm_info_t *vm)
 	uint32 tlen = sizeof(c_func_tab) / sizeof(int16);
 	for (uint32 i = 0; i < tlen; i++)
 	{
-		if (c_func_tab[i] > 0)
+		if (c_func_tab[i] == 0)
+			continue;
+		else if (c_func_tab[i] > 0)
 			vm_install_func1(vm, i, c_func_tab[i]);
 		else
-			println("TODO: %d", c_func_tab[i]);
+		{
+			switch (c_func_tab[i])
+			{
+			//内存相关的
+			case DATAP_LG_MEM_BASE:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.base);
+				break;
+			case DATAP_LG_MEM_LEN:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.len);
+				break;
+			case DATAP_LG_MEM_END:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.end);
+				break;
+			case DATAP_LG_MEM_LEFT:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.left);
+				break;
+			case DATAP_LG_MEM_MIN:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.min);
+				break;
+			case DATAP_LG_MEM_TOP:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.top);
+				break;
+			case DATAP_LG_MEM_FREE:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.free);
+				break;
+			//屏幕相关的
+			case DATAP_SCREENWIDTH:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.sysinfo.screen_width);
+				break;
+			case DATAP_SCREENHEIGHT:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.sysinfo.screen_height);
+				break;
+			case DATAP_SCREENBIT:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.sysinfo.screen_bits);
+				break;
+			case DATAP_SCREENBUF:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&vm->mem->video);
+				break;
+			//mrp包信息
+			case DATAP_PACK_FILENAME:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.pack_filename);
+				break;
+			case DATAP_OLD_PACK_FILENAME:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.old_pack_filename);
+				break;
+			case DATAP_START_FILENAME:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.start_filename);
+				break;
+			case DATAP_OLD_START_FILENAME:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.old_start_filename);
+				break;
+			case DATAP_START_FILE_PARAMETER:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.start_file_parameter);
+				break;
+			case DATAP_ENTRY:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.entry);
+				break;
+			//系统相关
+			case DATAP_SOUNDON:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_soundOn);
+				break;
+			case DATAP_SHAKEON:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_shakeOn);
+				break;
+			case DATAP_C_INTERNAL_TABLE:
+				mrst.c_internal_table[0] = vm_mem_offset(&mrst.mr_m0_files);
+				mrst.c_internal_table[1] = 0;
+				mrst.c_internal_table[2] = vm_mem_offset(&mrst.mr_state);
+				mrst.c_internal_table[3] = vm_mem_offset(&mrst.bi);
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.c_internal_table);
+				break;
+			case DATAP_RAM_FILE:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_ram_file);
+				break;
+			case DATAP_RAM_FILE_LEN:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_ram_file_len);
+				break;
+			//短信
+			case DATAP_SMS_RETURN_FLAG:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sms_return_flag);
+				break;
+			case DATAP_SMS_RETURN_VAL:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sms_return_val);
+				break;
+			default:
+				println("FUNCTABLE TODO:%d", c_func_tab[i]);
+				break;
+			}
+		}
 	}
+}
+
+uint32 vm_run(vm_info_t *vm, uint32 pc)
+{
+	vm->cpu->registers[r_lr] = 0;  //先设置lr寄存器位0，以便函数调用结束后pc为0
+	vm->cpu->registers[r_pc] = pc; //设置pc寄存器，指向函数入口
+
+	//如果PC寄存器一直不是0则一直循环，当PC指定的函数运行结束并返回后，此时的PC应该是0
+	while (vm->cpu->registers[r_pc] != 0)
+	{
+		uint32 inst = cpu_fetch_inst(vm->cpu); //取指令
+		cpu_exec_inst(vm->cpu, inst);		   //执行指令
+											   // cpu_print_regs(vm->cpu);
+	}
+
+	//返回函数执行后的返回结果
+	return vm->cpu->registers[0];
 }

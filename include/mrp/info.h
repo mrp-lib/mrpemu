@@ -19,6 +19,9 @@ typedef struct
 	uint32 appid;	   //appid
 	char author[40];   //作者
 	char desc[64];	   //介绍
+	//这两个和上面的差不多吧，不知道为什么要设置这么两个，待解...
+	uint32 ver; //版本号
+	uint32 id;	//appid
 } mrp_info_t;
 
 //mrp内部文件信息
@@ -79,8 +82,9 @@ mrp_file_info *mrp_file(mrp_reader_t *reader, char *filename);
 	filename		内部文件名
 	buffer			存放的位置
 返回：
-	读取到的长度
+	0		读取成功
+	-1		读取失败
 */
-uint32 mrp_read(mrp_reader_t *reader, char *filename, uint8 *buffer);
+int32 mrp_read(mrp_reader_t *reader, char *filename, uint8 *buffer);
 
 #endif

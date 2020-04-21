@@ -6,61 +6,102 @@
 #include <math.h>
 
 #include "helper/elf.h"
+#include "helper/swi.h"
+
 #include "arm.h"
 #include "mrp.h"
 #include "utils/array.h"
 #include "utils/gzip.h"
 
-#define memSize 0x200000 //1024 * 1024 * 2;
+#define memSize (1024 * 1024 * 2);
 
 //中断处理程序
+void handle_interapt(vm_info_t *vm, uint32 nu)
+{
+	//处理中断号
+	switch (nu)
+	{
+	case SWI_MR_C_FUNCTION_NEW:
+		return swi_mr_c_function_new(vm);
+	case SWI_MR_MALLOC:
+		return swi_mr_malloc(vm);
+	case SWI_MR_MEMMOVE:
+		return swi_mr_memmove(vm);
+	case SWI_MR_MEMSET:
+		return swi_mr_memset(vm);
+	case SWI_MR_MEMCPY:
+		return swi_mr_memcmp(vm);
+	case SWI_MR_MEMCHR:
+		return swi_mr_memchr(vm);
+	case SWI_MR_STRCPY:
+		return swi_mr_strcpy(vm);
+	case SWI_MR_STRNCPY:
+		return swi_mr_strncpy(vm);
+	case SWI_MR_STRCAT:
+		return swi_mr_strcat(vm);
+	case SWI_MR_STRNCAT:
+		return swi_mr_strncat(vm);
+	case SWI_MR_STRCMP:
+		return swi_mr_strcmp(vm);
+	case SWI_MR_STRNCMP:
+		return swi_mr_strncmp(vm);
+	case SWI_MR_STRCOLL:
+		return swi_mr_strcoll(vm);
+	case SWI_MR_STRLEN:
+		return swi_mr_strlen(vm);
+	case SWI_MR_STRSTR:
+		return swi_mr_strstr(vm);
+	case SWI_MR_ATOI:
+		return swi_mr_atoi(vm);
+	case SWI_MR_STRTOUL:
+		return swi_mr_strtoul(vm);
+	case SWI_MR_RAND:
+		return swi_mr_rand(vm);
+	case SWI_MR_SPRINTF:
+		return swi_mr_sprintf(vm);
+	case SWI_MR_PRINTF:
+		return swi_mr_printf(vm);
+	case SWI_MR_WSTRLEN:
+		return swi_mr_wstrlen(vm);
+	//平台的一些调用
+	case SWI_MR_TESTCOM:
+		return swi_mr_testcom(vm);
+	default:
+		println("产生中断:0x%04x(%d)", nu, nu);
+	}
+}
+
 int32 on_sorftware_interrupt(cpu_state_t *st, uint32 nu)
 {
-	println("产生中断:%d", nu);
+	//反向得到虚拟机指针
+	vm_mem_map_t *memmap = (vm_mem_map_t *)(st->mem->buffer + VM_MEM_OFFSET); //取得内存映射
+	vm_info_t *vm = (vm_info_t *)memmap->vmaddr;							  //从内存映射中取得虚拟机地址
+	//处理中断
+	handle_interapt(vm, nu);
 	return 0;
 }
 
 int32 test_mrp()
 {
-	char *file = "sdcard/mythroad/hello.mrp";
-
-	//获取mrp
-	mrp_reader_t *reader = mrp_open(file);
-	mrp_file_info *cfile = mrp_file(reader, "cfunction.ext");
-	uint8 *cfileData = malloc(cfile->size);
-	mrp_read(reader, "cfunction.ext", cfileData);
-
-	uint32 dLen;
-	uint8 *dst = ungzip(cfileData, cfile->size, null, &dLen);
-
-	println("gzip, len=%d", dLen);
+	char *file = "%sdcard/mythroad/hello.mrp";
 
 	//创建虚拟机
 	vm_info_t *vm = vm_create(1024 * 400);
+	mem_init(vm);		 //初始化虚拟机内存
 	vm_install_func(vm); //安装函数
-	//载入内存
-	uint8 *addr = vm_mem_alloc(vm, dLen);
-	memcpy(addr, dst, dLen);
-	*(uint32 *)addr = (uint32)vm_mem_offset(vm->mem->mr_func_tab);
 
-	//加载
-	cpu_state_t *cpu = vm->cpu;
-	cpu->registers[r_pc] = addr - cpu->mem->buffer + 8;
-	cpu->registers[r_sp] = vm->mem->stack - cpu->mem->buffer;
+	//设置一下虚拟机信息
+	mrst.sysinfo.screen_width = 240;
+	mrst.sysinfo.screen_height = 320;
+	mrst.sysinfo.screen_bits = 24; //这个填死就好
+	mrst.sysinfo.networkID = 0;	   //中国移动（讨厌联通，用移动，不过也好不到哪里去）
+	strcpy(mrst.sysinfo.IMEI, "123456789abcdef");
+	strcpy(mrst.sysinfo.IMSI, "aadfsd");
+	strcpy(mrst.sysinfo.manufactory, "YIZHI"); //厂商
+	strcpy(mrst.sysinfo.type, "MRPEMU");	   //手机类型
 
-	println("MRP Load Info:");
-	println("\t CODE ADDRESS:   %ld", addr - cpu->mem->buffer + 8);
-	println("\t CFUNC ADDRESS:  %ld", addr - cpu->mem->buffer);
-	println("\t STACH ADDRESS:  %ld", vm->mem->stack - cpu->mem->buffer);
-
-	cpu_print_regs(cpu);
-	while (true)
-	{
-		uint32 inst = cpu_fetch_inst(cpu);
-		println("inst: 0x%08x", inst);
-		cpu_exec_inst(cpu, inst);
-		cpu_print_regs(cpu);
-	}
+	//启动mrp
+	start_dsmC(vm, file);
 
 	vm_free(vm);
 

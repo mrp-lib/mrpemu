@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "common/tools.h"
 #include "mrp.h"
-
-#define MIN(a, b) (((a) > (b)) ? (b) : (a))
 
 //mrp头信息
 typedef struct
@@ -21,11 +19,13 @@ typedef struct
 	char _1[12];		//未知
 	char author[40];	//作者
 	char desc[64];		//介绍
+	uint32 ver;			//版本号
+	uint32 id;			//appid
 
 	/*
 	这些就不管了。
-	192-196		版本ID十六进制值
-	196-200		appid十六进制值
+	// 192-196		版本ID十六进制值
+	// 196-200		appid十六进制值
 	200-240		未知
 	*/
 } mrp_head_info;
@@ -58,6 +58,8 @@ mrp_reader_t *mrp_open(char *filename)
 	strcpy(reader->info.desc, head.desc);
 	reader->info.version = head.version;
 	reader->info.appid = head.appid;
+	reader->info.ver = ntohl(head.ver);
+	reader->info.id = ntohl(head.id);
 	//其他值
 	reader->data_offset = head.data_offset;
 	reader->list_offset = head.list_offset;
@@ -97,7 +99,7 @@ void mrp_load_files(mrp_reader_t *reader)
 		offset += 4;
 		//读取文件名
 		fseek(reader->fd, offset, SEEK_SET);
-		fread(nameBuffer, 1, MIN(nameLen, MRP_MAX_INNEER_NAME_LEN) - 1, reader->fd); //这里读取长度-1是为了保留一个\0
+		fread(nameBuffer, 1, min(nameLen, MRP_MAX_INNEER_NAME_LEN) - 1, reader->fd); //这里读取长度-1是为了保留一个\0
 		offset += nameLen;
 		//读取偏移
 		fseek(reader->fd, offset, SEEK_SET);
@@ -141,7 +143,7 @@ mrp_file_info *mrp_file(mrp_reader_t *reader, char *filename)
 	return null;
 }
 
-uint32 mrp_read(mrp_reader_t *reader, char *filename, uint8 *buffer)
+int32 mrp_read(mrp_reader_t *reader, char *filename, uint8 *buffer)
 {
 	logi("mrp_read(reader=%p, filename=%s, buffer=%p)", reader, filename, buffer);
 	mrp_file_info *info = mrp_file(reader, filename); //取得文件

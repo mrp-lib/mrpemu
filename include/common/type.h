@@ -21,17 +21,10 @@ typedef unsigned short uint16;
 typedef char int8;
 typedef unsigned char uint8;
 
-#define int32_min (-2147483648)
-#define int32_max (2147483647)
-#define uint32_max (2147483647)
-#define int16_min (-32768)
-#define int16_max (32767)
-#define uint16_max (65535)
-#define int8_min (-128)
-#define int8_max (127)
-#define uint8_max (255)
-#define int_max(bits) int##bits##_max
-#define int_min(bits) int##bits##_min
-#define uint_max(bits) uint##bits##_max
+//虚拟内存地址指针，这种指针指向的是虚拟机中的内存地址。
+typedef uint32 vmpt;
+
+//用于将一个虚拟内存地址指针转换为实际指针
+#define vmpt_real(type, p) ((type *)((vm->cpu->mem->buffer) + (p)))
 
 #endif
