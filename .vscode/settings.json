@@ -62,6 +62,9 @@
 		"util.h": "c",
 		"elf.h": "c",
 		"iconv.h": "c",
-		"arm.h": "c"
+		"arm.h": "c",
+		"log.h": "c",
+		"vm.h": "c",
+		"mr.h": "c"
 	}
 }
