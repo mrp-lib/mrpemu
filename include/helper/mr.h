@@ -86,7 +86,7 @@ typedef struct
 	注册固化列表，当调用mr_registerAPP函数时会往这里面填写
 	在初始化mr函数表的时候回被填写到c_internal_table的第0个位置
 	*/
-	char *mr_m0_files[MRST_MAX_0FILES];
+	vmpt mr_m0_files[MRST_MAX_0FILES];
 	/*
 	这里面存储的是一些状态吧，有些不是太明白
 	*/

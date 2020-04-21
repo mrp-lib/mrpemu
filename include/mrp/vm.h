@@ -10,13 +10,6 @@
 #define VM_MAX_PIXELS (480 * 800) //最大分辨率
 #define VM_STACK_SIZE (1024 * 20) //栈大小
 
-#define VM_MEM_BLOCK_SIZE 64 //内存块大小
-
-#define VM_MEM_BLK_USD 0x01 //内存被使用
-#define VM_MEM_BLK_BEG 0x02 //内存先导块，这个块之后的块都属于这个块
-
-#define SYSCALL_PARAM_MAX 40 //系统调用支持的最大参数数量
-
 #define vm_mem_offset(addr) ((uint8 *)(addr) - (uint8 *)(vm->cpu->mem->buffer)) //用来获取某些值得内存偏移
 #define vm_mem_buf (vm->cpu->mem->buffer)										//获取虚拟机内存的实际地址
 #define vmreg(i) (vm->cpu->registers[i])										//获取某个寄存器

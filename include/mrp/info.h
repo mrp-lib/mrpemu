@@ -7,7 +7,7 @@
 
 #include "common/type.h"
 
-#define MRP_MAX_INNEER_NAME_LEN 256 //mrp内部文件名称最大长度
+#define MRP_MAX_INNEER_NAME_LEN 128 //mrp内部文件名称最大长度
 #define MRP_MAX_INNEER_FILE 512		//mrp内部文件最大数量
 
 //mrp信息结构

@@ -2,7 +2,7 @@
 #define __ARM_H__
 
 /*
-这里说明一下arm架构的版本
+这里说明一下arm架构的版本，额，目前是没有管它的，留着备用一下吧
 */
 #define ARCH_V_4 (0)	  //4
 #define ARCH_V_4T5T		  //4T、5T

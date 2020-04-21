@@ -8,7 +8,7 @@
 #define START_FILE_NAME "cfunction.ext"
 #define START_EXT "cfunction.ext"
 
-#define MR_READ_MAX_LEN (1024 * 800) //读取mrp时分配的最大内存空间，额，800k足够用了吧
+#define MR_READ_MAX_LEN (1024 * 400) //读取mrp时分配的最大内存空间，额，800k足够用了吧
 
 uint32 read_mrp_file(vm_info_t *vm, char *filename, uint8 *buffer)
 {
