@@ -23,7 +23,7 @@
 	MR_SUCCESS	成功启动
 	MR_FAILED	失败
 */
-int32 start_dsm(vm_info_t *vm, char *entry);
+int32 mr_start_dsm(vm_info_t *vm, char *entry);
 
 /*
 直接启动mrp文件，并且可以传参过去
@@ -34,7 +34,7 @@ int32 start_dsm(vm_info_t *vm, char *entry);
 	MR_SUCCESS	成功启动
 	MR_FAILED	失败
 */
-int32 start_dsmB(vm_info_t *vm, char *entry);
+int32 mr_start_dsmB(vm_info_t *vm, char *entry);
 
 /*
 通过入口参数来启动虚拟机
@@ -45,7 +45,7 @@ int32 start_dsmB(vm_info_t *vm, char *entry);
 	MR_SUCCESS	成功启动
 	MR_FAILED	失败
 */
-int32 start_dsmC(vm_info_t *vm, char *entry);
+int32 mr_start_dsmC(vm_info_t *vm, char *entry);
 
 /*
 通过入口参数来启动虚拟机
@@ -57,7 +57,7 @@ int32 start_dsmC(vm_info_t *vm, char *entry);
 	MR_SUCCESS	成功启动
 	MR_FAILED	失败
 */
-int32 start_dsm_ex(vm_info_t *vm, char *path, char *entry);
+int32 mr_start_dsm_ex(vm_info_t *vm, char *path, char *entry);
 
 int32 mr_testCom(vm_info_t *vm, int32 L, int input0, int input1);
 int32 mr_TestCom1(vm_info_t *vm, int32 L, int input0, char *input1, int32 len);

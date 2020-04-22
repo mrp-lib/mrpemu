@@ -30,7 +30,7 @@
 #define SWI_MR_PRINTF 0x1041
 #define SWI_MR_MEM_GET 0x1042
 #define SWI_MR_MEM_FREE 0x1043
-#define SWI_MR_DRAWBITMAPA 0x1044	//TODO这个和下面有冲突？？？？？先改个名字吧，额
+#define SWI_MR_DRAWBITMAPA 0x1044 //TODO这个和下面有冲突？？？？？先改个名字吧，额
 #define SWI_MR_GETCHARBITMAP 0x1045
 #define SWI_MR_TIMERSTART 0x1046
 #define SWI_MR_TIMERSTOP 0x1047

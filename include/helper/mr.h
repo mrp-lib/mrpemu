@@ -4,6 +4,8 @@
 #include "common/type.h"
 #include "mrp/mem.h"
 
+#define MAX_FILE_PATH_LEN 256 //最大文件路径长度
+
 #define MR_SUCCESS 0 //成功
 #define MR_FAILED -1 //失败
 #define MR_IGNORE 1	 //不关心
@@ -14,7 +16,50 @@
 
 #define MR_FILE_MAX_LEN 128		   //mrp文件名及mrp内部文件名的最大长度
 #define MRST_MAX_0FILES 50		   //注册固化应用的最大数量
-#define MRST_INTERNAL_TABLE_MAX 16 //c_internal_table的最大数量
+#define MRST_INTERNAL_TABLE_MAX 16 //c_internal_table的最大长度
+#define MRST_CPORT_TABLE_MAX 4	   //c_port_table的最大长度
+
+#define BITMAPMAX 30
+#define SPRITEMAX 10
+#define TILEMAX 3
+#define SOUNDMAX 5
+
+typedef struct
+{
+	uint16 w;
+	uint16 h;
+	uint32 buflen;
+	uint32 type;
+	// uint16 *p;
+	vmpt p;
+} mr_bitmap_t;
+
+typedef struct
+{
+	int16 x;
+	int16 y;
+	uint16 w;
+	uint16 h;
+	int16 x1;
+	int16 y1;
+	int16 x2;
+	int16 y2;
+	uint16 tilew;
+	uint16 tileh;
+} mr_tile_t;
+
+typedef struct
+{
+	//    void*            p;
+	vmpt p;
+	uint32 buflen;
+	int32 type;
+} mr_sound_t;
+
+typedef struct
+{
+	uint16 h;
+} mr_sprite_t;
 
 /*
 系统信息，这里的信息是可以被修改的。
@@ -40,6 +85,9 @@ typedef struct mr_sys_info_st
 	char type[8];		 //mobile type，最大7个字符，空字节填\0
 	uint32 ver;			 //SW ver
 	uint8 spare[12];	 //备用
+
+	char sdcard_dir[MAX_FILE_PATH_LEN]; //SD卡目录
+	char dsm_dir[MAX_FILE_PATH_LEN];	//dsm目录，一般是mythroad啦
 
 } mr_sys_info_t;
 
@@ -90,7 +138,8 @@ typedef struct
 	/*
 	这里面存储的是一些状态吧，有些不是太明白
 	*/
-	vmpt c_internal_table[MRST_INTERNAL_TABLE_MAX];
+	vmpt mr_c_internal_table[MRST_INTERNAL_TABLE_MAX];
+	vmpt mr_c_port_table[MRST_CPORT_TABLE_MAX];
 	/*
 	内存状态
 	在调用内存初始化函数的时候回填充此结构，并将此结构中的值填充到函数表的特定位置。
@@ -113,6 +162,12 @@ typedef struct
 	vmpt mr_ram_file;
 	uint32 mr_ram_file_len;
 
+	mr_bitmap_t mr_bitmap[BITMAPMAX + 1];
+	mr_tile_t mr_tile[TILEMAX];
+	vmpt mr_map[TILEMAX];
+	mr_sound_t mr_sound[SOUNDMAX];
+	mr_sprite_t mr_sprite[SPRITEMAX];
+
 	/*
 	下面这几个函数是由mrp通过testCom注册的
 	*/
@@ -126,10 +181,17 @@ typedef struct
 	int8 mr_soundOn;
 	int8 mr_shakeOn;
 	int32 bi;
+
+	vmpt vm_state; //mrp_State*
 	int32 mr_state;
+
+	vmpt mr_timer_p; //void **
+	int32 mr_timer_state;
+	int32 mr_timer_run_without_pause;
 
 	uint8 mr_sms_return_flag;
 	int32 mr_sms_return_val;
+	vmpt mr_sms_cfg_buf; //实际类型uint8*
 
 } mr_state_t;
 

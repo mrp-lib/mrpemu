@@ -50,6 +50,9 @@ typedef struct vm_mem_map_st
 	*/
 	mr_state_t mr_state;
 
+	/*堆内存开始地址*/
+	uint8 heap[0];
+
 } vm_mem_map_t;
 
 /*

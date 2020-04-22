@@ -34,7 +34,7 @@ mrp_reader_t *mrp_open(char *filename)
 {
 	logi("mrp_open(filename=%s)", filename);
 	//打开文件
-	FILE *fd = fopen(filename, "r");
+	FILE *fd = fopen(filename, "rb");
 	if (fd == null)
 		return null;
 	//读取头
@@ -151,7 +151,8 @@ int32 mrp_read(mrp_reader_t *reader, char *filename, uint8 *buffer)
 		return -1;
 	//读取
 	fseek(reader->fd, info->offset, SEEK_SET);
-	if (info->size != fread(buffer, 1, info->size, reader->fd))
+	size_t readed = fread(buffer, 1, info->size, reader->fd);
+	if (info->size != readed)
 		return -1;
 	//返回
 	return 0;

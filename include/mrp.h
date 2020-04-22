@@ -12,6 +12,7 @@
 #include "mrp/info.h"
 #include "mrp/vm.h"
 #include "mrp/mem.h"
+#include "mrp/swi.h"
 
 #include "helper/mr.h"
 
@@ -19,6 +20,7 @@
 
 #include "mrp/mr/cport.h"
 #include "mrp/mr/dsm.h"
+#include "mrp/mr/fs.h"
 #include "mrp/mr/mem.h"
 
 #endif

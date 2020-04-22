@@ -4,7 +4,6 @@
 
 #include "arm.h"
 #include "mrp.h"
-#include "helper/swi.h"
 
 static int16 c_func_tab[] = {
 	SWI_MR_MALLOC,
@@ -180,12 +179,13 @@ static int16 c_func_tab[] = {
 
 vm_info_t *vm_create(uint32 memSize)
 {
-	logi("vm_create(memSize=%d)", memSize);
 	//内存分配
 	uint32 cpu_mem_size = sizeof(vm_mem_map_t) + VM_MEM_OFFSET + memSize; //计算CPU内存大小
 	memory_t *mem = mem_create(cpu_mem_size);							  //分配内存
 	if (mem == null)
 		return null;
+
+	logi("vm_create(memSize=%d, totalSize=%d)", memSize, cpu_mem_size);
 
 	//用一个指针指向内存映射的区域
 	vm_mem_map_t *memMap = (vm_mem_map_t *)(mem->buffer + VM_MEM_OFFSET);
@@ -344,11 +344,14 @@ void vm_install_func(vm_info_t *vm)
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_shakeOn);
 				break;
 			case DATAP_C_INTERNAL_TABLE:
-				mrst.c_internal_table[0] = vm_mem_offset(&mrst.mr_m0_files);
-				mrst.c_internal_table[1] = 0;
-				mrst.c_internal_table[2] = vm_mem_offset(&mrst.mr_state);
-				mrst.c_internal_table[3] = vm_mem_offset(&mrst.bi);
-				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.c_internal_table);
+				mrst.mr_c_internal_table[0] = vm_mem_offset(&mrst.mr_m0_files);
+				mrst.mr_c_internal_table[1] = vm_mem_offset(&mrst.vm_state);
+				mrst.mr_c_internal_table[2] = vm_mem_offset(&mrst.mr_state);
+				mrst.mr_c_internal_table[3] = vm_mem_offset(&mrst.bi);
+				mrst.mr_c_internal_table[4] = vm_mem_offset(&mrst.mr_timer_p);
+				mrst.mr_c_internal_table[5] = vm_mem_offset(&mrst.mr_timer_state);
+				mrst.mr_c_internal_table[6] = vm_mem_offset(&mrst.mr_timer_run_without_pause);
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_c_internal_table);
 				break;
 			case DATAP_RAM_FILE:
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_ram_file);
@@ -356,12 +359,34 @@ void vm_install_func(vm_info_t *vm)
 			case DATAP_RAM_FILE_LEN:
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_ram_file_len);
 				break;
+			case DATAP_C_PORT_TABLE:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_c_port_table);
+				break;
 			//短信
 			case DATAP_SMS_RETURN_FLAG:
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sms_return_flag);
 				break;
 			case DATAP_SMS_RETURN_VAL:
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sms_return_val);
+				break;
+			case DATAP_SMS_CFG_BUF:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sms_cfg_buf);
+				break;
+			//一些资源相关的
+			case DATAP_BITMAP:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_bitmap);
+				break;
+			case DATAP_TILE:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_tile);
+				break;
+			case DATAP_MAP:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_map);
+				break;
+			case DATAP_SOUND:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sound);
+				break;
+			case DATAP_SPRITE:
+				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mr_sprite);
 				break;
 			default:
 				println("FUNCTABLE TODO:%d", c_func_tab[i]);

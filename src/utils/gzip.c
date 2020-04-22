@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "common/log.h"
 
 #include "zlib/zlib.h"
 #include "utils/gzip.h"

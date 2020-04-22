@@ -65,6 +65,7 @@
 		"arm.h": "c",
 		"log.h": "c",
 		"vm.h": "c",
-		"mr.h": "c"
+		"mr.h": "c",
+		"stat.h": "c"
 	}
 }

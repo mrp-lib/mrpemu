@@ -34,7 +34,8 @@ uint32 read_mrp_file(vm_info_t *vm, char *filename, uint8 *buffer)
 		}
 
 		//读取文件
-		if (0 != mrp_read(reader, filename, buffer))
+		uint32 ret = mrp_read(reader, filename, buffer);
+		if (0 != ret)
 		{
 			mrp_close(reader);
 			return 0;
@@ -102,6 +103,36 @@ int32 do_ext(vm_info_t *vm, char *filename)
 int32 intra_start(vm_info_t *vm, char *filename, char *entry)
 {
 	//TODO 这个函数还有一些状态没有处理
+	mrst.mr_event_function = 0;
+	mrst.mr_timer_function = 0;
+	mrst.mr_stop_function = 0;
+	mrst.mr_pauseApp_function = 0;
+	mrst.mr_resumeApp_function = 0;
+
+	mrst.mr_ram_file = 0;
+	mrst.mr_ram_file_len = 0;
+	mrst.mr_c_function_P = 0;
+	mrst.mr_c_function_P_Len = 0;
+
+	mrst.vm_state = 0;
+	mrst.mr_timer_state = 0;
+	mrst.mr_timer_run_without_pause = 0;
+	mrst.bi &= 2;
+
+	memset(mrst.mr_bitmap, 0, sizeof(mr_bitmap_t) * BITMAPMAX);
+	memset(mrst.mr_sound, 0, sizeof(mr_sound_t) * SOUNDMAX);
+	memset(mrst.mr_sprite, 0, sizeof(mr_sprite_t) * SPRITEMAX);
+	memset(mrst.mr_tile, 0, sizeof(mr_tile_t) * TILEMAX);
+	memset(mrst.mr_map, 0, 12);
+
+	for (uint32 i = 0; i < TILEMAX; i++)
+	{
+		mrst.mr_tile[i].x1 = 0;
+		mrst.mr_tile[i].y1 = 0;
+		mrst.mr_tile[i].x2 = (int16)(mrst.sysinfo.screen_width & 0xffff);
+		mrst.mr_tile[i].y2 = (int16)(mrst.sysinfo.screen_width & 0xffff);
+	}
+
 	if (entry == null)
 		entry = "_dsm";
 
@@ -122,7 +153,7 @@ int32 intra_start(vm_info_t *vm, char *filename, char *entry)
 	return MR_SUCCESS;
 }
 
-int32 start_dsm(vm_info_t *vm, char *entry)
+int32 mr_start_dsm(vm_info_t *vm, char *entry)
 {
 	memset(mrst.pack_filename, 0, MR_FILE_MAX_LEN);
 	if (NULL != entry && *entry == '*')
@@ -143,7 +174,7 @@ int32 start_dsm(vm_info_t *vm, char *entry)
 	return intra_start(vm, START_FILE_NAME, entry);
 }
 
-int32 start_dsmB(vm_info_t *vm, char *entry)
+int32 mr_start_dsmB(vm_info_t *vm, char *entry)
 {
 	memset(mrst.pack_filename, 0, MR_FILE_MAX_LEN);
 	if (null != entry && *entry == '*')
@@ -178,12 +209,12 @@ int32 start_dsmB(vm_info_t *vm, char *entry)
 	memset(mrst.old_start_filename, 0, MR_FILE_MAX_LEN);
 	memset(mrst.start_file_parameter, 0, MR_FILE_MAX_LEN);
 
-	logi("start_dsmB(vm=%p, entry=%s, pack_filename=%s)", vm, entry, mrst.pack_filename);
+	logi("mr_start_dsmB(vm=%p, entry=%s, pack_filename=%s)", vm, entry, mrst.pack_filename);
 
 	return intra_start(vm, START_FILE_NAME, entry);
 }
 
-int32 start_dsmC(vm_info_t *vm, char *entry)
+int32 mr_start_dsmC(vm_info_t *vm, char *entry)
 {
 	memset(mrst.pack_filename, 0, MR_FILE_MAX_LEN);
 	if (null != entry && *entry == '*')
@@ -199,12 +230,12 @@ int32 start_dsmC(vm_info_t *vm, char *entry)
 	memset(mrst.old_start_filename, 0, MR_FILE_MAX_LEN);
 	memset(mrst.start_file_parameter, 0, MR_FILE_MAX_LEN);
 
-	logi("start_dsmC(vm=%p, entry=%s, pack_filename=%s)", vm, entry, mrst.pack_filename);
+	logi("mr_start_dsmC(vm=%p, entry=%s, pack_filename=%s)", vm, entry, mrst.pack_filename);
 
 	return intra_start(vm, START_FILE_NAME, entry);
 }
 
-int32 start_dsm_ex(vm_info_t *vm, char *path, char *entry)
+int32 mr_start_dsm_ex(vm_info_t *vm, char *path, char *entry)
 {
 
 	memset(mrst.pack_filename, 0, MR_FILE_MAX_LEN);
@@ -221,7 +252,7 @@ int32 start_dsm_ex(vm_info_t *vm, char *path, char *entry)
 	memset(mrst.old_start_filename, 0, MR_FILE_MAX_LEN);
 	memset(mrst.start_file_parameter, 0, MR_FILE_MAX_LEN);
 
-	logi("start_dsm_ex(vm=%p, path=%s, entry=%s, pack_filename=%s)", vm, path, entry, mrst.pack_filename);
+	logi("mr_start_dsm_ex(vm=%p, path=%s, entry=%s, pack_filename=%s)", vm, path, entry, mrst.pack_filename);
 	return intra_start(vm, START_FILE_NAME, entry);
 }
 
@@ -297,9 +328,11 @@ int32 mr_testCom(vm_info_t *vm, int32 L, int input0, int input1)
 		mrst.sysinfo.screen_width = input1;
 		break;
 	case 0x194:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		// _mr_newSIMInd((int16)input1, NULL);
 		break;
 	case 0x195:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		// ret = mr_closeNetwork();
 		break;
 	case 0x196:
@@ -307,16 +340,20 @@ int32 mr_testCom(vm_info_t *vm, int32 L, int input0, int input1)
 		mrst.sysinfo.screen_height = input1;
 		break;
 	case 0x197:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		// mr_timer_run_without_pause = (void *)input1;
 		// mr_plat(1202, input1);
 		break;
 	case 0x198:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		//TODO
 		break;
 	case 0x1f4:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		// ret = _mr_load_sms_cfg();
 		break;
 	case 0x1f7:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		// {
 		// 	uint8 dst;
 		// 	_mr_smsGetBytes(5, &dst, 1);
@@ -324,6 +361,7 @@ int32 mr_testCom(vm_info_t *vm, int32 L, int input0, int input1)
 		// }
 		break;
 	case 0x1f8:
+		logw("mr_testCom got unkown param: code=%d", input0);
 		// ret = _mr_save_sms_cfg(input1);
 		break;
 
@@ -353,7 +391,7 @@ int32 mr_TestCom1(vm_info_t *vm, int32 L, int input0, char *input1, int32 len)
 
 int32 mr_testComC(vm_info_t *vm, int32 type, vmpt input, int32 len, int32 code)
 {
-	logi("testComC(mv=%p, type=%d, input=0x%08x, len=%d, code=%d)", vm, type, input, len, code);
+	logi("mr_testComC(mv=%p, type=%d, input=0x%08x, len=%d, code=%d)", vm, type, input, len, code);
 	//调用mr_load_c_function函数
 	if (type == 800)
 	{
