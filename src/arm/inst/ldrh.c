@@ -16,8 +16,6 @@ int32 arm_inst_ldrh(cpu_state_t *st, uint32 inst)
 	uint32 rn = inst_b4(16);
 	uint32 addr = addr_mode_3(st, inst);
 
-	println("ldh: %d ->r %d", addr, rd);
-
 	//TODO 其他一些条件不处理了，这里直接加载半字
 	uint16 data = mem_ld16(st->mem, addr);
 	st->registers[rd] = (uint32)data;

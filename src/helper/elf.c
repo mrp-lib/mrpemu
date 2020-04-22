@@ -10,7 +10,7 @@
 elf_t *elf_open(char *filename)
 {
 	//打开文件
-	FILE *fp = fopen(filename, "r");
+	FILE *fp = fopen(filename, "rb");
 	if (fp == null)
 		return null;
 

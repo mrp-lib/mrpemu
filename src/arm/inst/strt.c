@@ -12,8 +12,6 @@ int32 arm_inst_strt(cpu_state_t *st, uint32 inst)
 	uint32 address = addr_mode_2(st, inst);
 	uint32 rd = inst_b4(12);
 
-	println("strt: r%d ->%d", rd, address);
-
 	//这个也和str一样的？？
 
 	mem_st32(st->mem, address, regv(rd));

@@ -11,12 +11,17 @@
 #define ARCH_V_6		  //6
 #define ARCH_VER ARCH_V_4 //这里制定一下
 
+#include "config.h"
 #include "common/bits.h"
 #include "common/log.h"
 #include "common/type.h"
 
 //打印指令
+#ifdef ENABLE_ARM_INST_LOG
 #define loginst(name, hex) println("[INST]  name=%s, hex=0x%08x", name, hex)
+#else
+#define loginst(name, hex)
+#endif
 
 #include "arm/cpu.h"
 #include "arm/mem.h"

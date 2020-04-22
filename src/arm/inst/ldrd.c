@@ -17,8 +17,6 @@ int32 arm_inst_ldrd(cpu_state_t *st, uint32 inst)
 	uint32 rd = inst_b4(12);
 	uint32 addr = addr_mode_3(st, inst);
 
-	println("ldrd: %d ->r %d", addr, rd);
-
 	//要求rd是偶数，并且不能是r14
 	//TODO 另外还有一些条件，这里暂且不处理他们
 	if (even(rd) && rd != 14 && (addr & 0b0011) == 0b0000)
