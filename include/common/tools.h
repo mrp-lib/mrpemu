@@ -3,6 +3,7 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b)) //计算最大值
 #define min(a, b) ((a) > (b) ? (b) : (a)) //计算最小值
+#define abs(a) (((a) >= 0) ? (a) : -(a))  //绝对值
 
 #define ntohl(num) ((num << 24) | ((num & 0x0000FF00) << 8) | ((num & 0x00FF0000) >> 8) | (num >> 24)) //大小端转换
 

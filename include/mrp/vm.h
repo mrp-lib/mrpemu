@@ -13,6 +13,12 @@
 #define vm_mem_offset(addr) ((uint8 *)(addr) - (uint8 *)(vm->cpu->mem->buffer)) //用来获取某些值得内存偏移
 #define vm_mem_buf (vm->cpu->mem->buffer)										//获取虚拟机内存的实际地址
 #define vmreg(i) (vm->cpu->registers[i])										//获取某个寄存器
+#define vmstack(i) (*((uint32 *)(vm_mem_buf + vmreg(r_sp)) + i))				//获取当前栈顶偏移某个位置的值
+
+/*
+屏幕刷新回调函数，次函数由调用者传递。
+*/
+typedef void (*on_screen_refresh_t)(uint16 *bmp, int16 x, int16 y, uint16 w, uint16 h);
 
 /*
 	虚拟机内存映射表
@@ -33,7 +39,7 @@ typedef struct vm_mem_map_st
 	uint8 stack[VM_STACK_SIZE];
 
 	/*显存*/
-	uint8 video[VM_MAX_PIXELS * 3];
+	uint16 video[VM_MAX_PIXELS];
 
 	/*mr函数表，这里存的是函数具体的地址*/
 	uint32 mr_func_tab[200];
@@ -60,9 +66,10 @@ typedef struct vm_mem_map_st
 */
 typedef struct vm_info_st
 {
-	vm_mem_map_t *mem;		  //内存映射信息
-	cpu_state_t *cpu;		  //cpu信息
-	struct timeval startTime; //创建时间
+	vm_mem_map_t *mem;			   //内存映射信息
+	cpu_state_t *cpu;			   //cpu信息
+	struct timeval startTime;	   //创建时间
+	on_screen_refresh_t onRefresh; //屏幕刷新回调
 } vm_info_t;
 
 /*
@@ -96,5 +103,41 @@ void vm_install_func(vm_info_t *vm);
 	额，也就是pc指向的函数执行后的返回值
 */
 uint32 vm_run(vm_info_t *vm, uint32 pc);
+
+/*
+获取显存地址及长度
+这个函数主要提供给外部使用，外部通过调用这个函数可以读取显存并显示到屏幕上
+*/
+extern uint16 *vm_getVideo(vm_info_t *vm, uint32 *size);
+
+/*
+设置屏幕信息
+这个函数主要提供给外部使用，外部通过调用这个函数可以实现屏幕分辨率的设置，不过不能超过最大分辨率
+*/
+extern void vm_setScreen(vm_info_t *vm, uint32 width, uint32 height, uint32 bits);
+
+/*
+设置设备信息
+这个函数主要提供给外界使用，外部调用此接口实现系统信息的设置
+*/
+extern void vm_setSystemInfo(vm_info_t *vm, char *IMEI, char *IMSI, char *manufactory, char *type);
+
+/*
+设置网络ID: 0移动, 1联动GSM, 2联通CDMA, 3未插卡
+这个函数主要提供给外界使用，用来设置系统的网络ID
+*/
+extern void vm_setNetworkId(vm_info_t *vm, uint32 networkId);
+
+/*
+设置存储空间
+这个函数主要提供给外部使用，用于设置sdcard目录以及mythroad目录
+*/
+extern void vm_setStorage(vm_info_t *vm, char *sdcard_dir, char *dsm_dir);
+
+/*
+设置屏幕刷新回调
+这个函数主要提供给外部使用，用来监听屏幕刷新，在回调函数中可以对数据进行绘制。
+*/
+extern void vm_setOnRefresh(vm_info_t *vm, on_screen_refresh_t cb);
 
 #endif

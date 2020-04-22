@@ -8,50 +8,11 @@
 #include "mrp.h"
 #include "utils/coding.h"
 
-/*
- * 整理路径，将分隔符统一为sep，并清除连续的多个
- *
- * 参数：路径(必须可读写)
- */
-char *FormatPathString(char *path, char sep)
-{
-	char *p, *q;
-	int flag = 0;
-
-	if (NULL == path)
-		return NULL;
-
-	for (p = q = path; '\0' != *p; p++)
-	{
-		if ('\\' == *p || '/' == *p)
-		{
-			if (0 == flag)
-				*q++ = sep;
-			flag = 1;
-		}
-		else
-		{
-			*q++ = *p;
-			flag = 0;
-		}
-	}
-
-	*q = '\0';
-
-	return path;
-}
-
-// 由相对路径的文件名接成绝对路径名
-char *get_filename(vm_info_t *vm, char *outputbuf, char *filename)
-{
-	char dsmFullPath[MAX_FILE_PATH_LEN + 1];
-
-	snprintf(dsmFullPath, sizeof(dsmFullPath), "%s%s%s", mrst.sysinfo.sdcard_dir, mrst.sysinfo.dsm_dir, filename);
-	FormatPathString(dsmFullPath, '/');
-	GBToUTF8String((uint8 *)&dsmFullPath, (uint8 *)outputbuf, MAX_FILE_PATH_LEN);
-
-	return outputbuf;
-}
+#if WIN32
+#define _mkdir mkdir
+#else
+#define _mkdir(dirname) mkdir((dirname), 0777)
+#endif
 
 void swi_mr_ferrno(vm_info_t *vm)
 {
@@ -68,9 +29,8 @@ void swi_mr_open(vm_info_t *vm)
 	char *filename = vmpt_real(char, _filename);
 	logsysc("mr_open(filename=%s, mode=%d)", filename, mode);
 
-	int new_mode = 0;
-	char fullpathname[MAX_FILE_PATH_LEN] = {0};
 
+	int new_mode = 0;
 	if (mode & MR_FILE_RDONLY)
 		new_mode = O_RDONLY;
 	if (mode & MR_FILE_WRONLY)
@@ -78,6 +38,7 @@ void swi_mr_open(vm_info_t *vm)
 	if (mode & MR_FILE_RDWR)
 		new_mode = O_RDWR;
 
+	char fullpathname[MAX_FILE_PATH_LEN] = {0};
 	get_filename(vm, fullpathname, filename);
 
 	//如果文件存在 带此标志会导致错误
@@ -88,6 +49,7 @@ void swi_mr_open(vm_info_t *vm)
 	int f = open(fullpathname, new_mode, 0777);
 	if (f < 0)
 	{
+		loge("mr_open failed with filename=%s", fullpathname);
 		mr_ret(0);
 		return;
 	}
@@ -272,7 +234,7 @@ void swi_mr_mkDir(vm_info_t *vm)
 		return;
 	}
 
-	int ret = mkdir(fullpathname, 0777);
+	int ret = _mkdir(fullpathname);
 
 	mr_ret((ret == 0) ? MR_SUCCESS : MR_FAILED);
 }

@@ -16,9 +16,14 @@
 
 #include "helper/mr.h"
 
+#include "mrp/sys/draw.h"
 #include "mrp/sys/dsm.h"
+#include "mrp/sys/font.h"
+#include "mrp/sys/util.h"
 
 #include "mrp/mr/cport.h"
+#include "mrp/mr/device.h"
+#include "mrp/mr/draw.h"
 #include "mrp/mr/dsm.h"
 #include "mrp/mr/fs.h"
 #include "mrp/mr/mem.h"

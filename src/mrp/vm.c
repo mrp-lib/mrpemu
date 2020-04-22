@@ -4,6 +4,7 @@
 
 #include "arm.h"
 #include "mrp.h"
+#include "common/tools.h"
 
 static int16 c_func_tab[] = {
 	SWI_MR_MALLOC,
@@ -39,7 +40,7 @@ static int16 c_func_tab[] = {
 	SWI_MR_PRINTF,
 	SWI_MR_MEM_GET,
 	SWI_MR_MEM_FREE,
-	SWI_MR_DRAWBITMAPA,
+	SWI_MR_DRAWBITMAP,
 	SWI_MR_GETCHARBITMAP,
 	SWI_MR_TIMERSTART,
 	SWI_MR_TIMERSTOP,
@@ -145,7 +146,7 @@ static int16 c_func_tab[] = {
 
 	SWI_MR_DISPUPEX,
 	SWI_MR_DRAWPOINT,
-	SWI_MR_DRAWBITMAP,
+	SWI_MR_DRAWBITMAP1,
 	SWI_MR_DRAWBITMAPEX,
 	SWI_MR_DRAWRECT,
 	SWI_MR_DRAWTEXT,
@@ -411,4 +412,44 @@ uint32 vm_run(vm_info_t *vm, uint32 pc)
 
 	//返回函数执行后的返回结果
 	return vm->cpu->registers[0];
+}
+
+uint16 *vm_getVideo(vm_info_t *vm, uint32 *size)
+{
+	if (size == null)
+		return null;
+
+	*size = mrst.sysinfo.screen_width * mrst.sysinfo.screen_height;
+	return vm->mem->video;
+}
+
+void vm_setScreen(vm_info_t *vm, uint32 width, uint32 height, uint32 bits)
+{
+	mrst.sysinfo.screen_width = width;
+	mrst.sysinfo.screen_height = height;
+	mrst.sysinfo.screen_bits = bits;
+}
+
+void vm_setSystemInfo(vm_info_t *vm, char *IMEI, char *IMSI, char *manufactory, char *type)
+{
+	strncpy(mrst.sysinfo.IMEI, IMEI, min(strlen(IMEI), 16));
+	strncpy(mrst.sysinfo.IMSI, IMSI, min(strlen(IMSI), 16));
+	strncpy(mrst.sysinfo.manufactory, manufactory, min(strlen(manufactory), 8));
+	strncpy(mrst.sysinfo.type, type, min(strlen(type), 8));
+}
+
+void vm_setNetworkId(vm_info_t *vm, uint32 networkId)
+{
+	mrst.sysinfo.networkID = networkId;
+}
+
+void vm_setStorage(vm_info_t *vm, char *sdcard_dir, char *dsm_dir)
+{
+	strncpy(mrst.sysinfo.sdcard_dir, sdcard_dir, min(strlen(sdcard_dir), MAX_FILE_PATH_LEN));
+	strncpy(mrst.sysinfo.dsm_dir, dsm_dir, min(strlen(dsm_dir), MAX_FILE_PATH_LEN));
+}
+
+void vm_setOnRefresh(vm_info_t *vm, on_screen_refresh_t cb)
+{
+	vm->onRefresh = cb;
 }

@@ -35,12 +35,15 @@ mrp_reader_t *mrp_open(char *filename)
 	logi("mrp_open(filename=%s)", filename);
 	//打开文件
 	FILE *fd = fopen(filename, "rb");
-	if (fd == null)
+	if (fd == null){
+		loge("mrp_open failed when open file");
 		return null;
+	}
 	//读取头
 	mrp_head_info head = {0};
 	if (sizeof(mrp_head_info) != fread(&head, 1, sizeof(mrp_head_info), fd))
 	{
+		loge("mrp_open failed when read head");
 		fclose(fd);
 		return null;
 	}
@@ -48,6 +51,8 @@ mrp_reader_t *mrp_open(char *filename)
 	mrp_reader_t *reader = (mrp_reader_t *)malloc(sizeof(mrp_reader_t));
 	if (reader == null)
 	{
+		
+		loge("mrp_open failed when alloc reader");
 		fclose(fd);
 		return null;
 	}
