@@ -28,7 +28,7 @@
 #define borrow16(res) ((res)&0x10000)															  //检测是否16位借位(同上)
 
 bool check_cond(cpu_state_t *st, uint32 inst);												//条件检测
-bool shifter_operand(cpu_state_t *st, uint32 inst, uint32 *operand);						//地址模式1
+uint32 addr_mode_1(cpu_state_t *st, uint32 inst, bool *carry);								//地址模式1
 uint32 addr_mode_2(cpu_state_t *st, uint32 inst);											//地址模式2
 uint32 addr_mode_3(cpu_state_t *st, uint32 inst);											//地址模式3
 void addr_mode_4(cpu_state_t *st, uint32 inst, uint32 *start_address, uint32 *end_address); //地址模式4

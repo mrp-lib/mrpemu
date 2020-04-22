@@ -12,8 +12,7 @@ int32 arm_inst_cmn(cpu_state_t *st, uint32 inst)
 		return EXEC_UNPREDICTABLE;
 
 	uint32 rn = inst_b4(16);
-	uint32 operand;
-	bool carry = shifter_operand(st, inst, &operand);
+	uint32 operand = addr_mode_1(st, inst, null);
 
 	uint32 result = regv(rn) + operand;
 	st->cpsr.n = result >> 31;

@@ -11,8 +11,7 @@ int32 arm_inst_sub(cpu_state_t *st, uint32 inst)
 	uint32 s = inst_b1(20);
 	uint32 rn = inst_b4(16);
 	uint32 rd = inst_b4(12);
-	uint32 operand;
-	bool carry = shifter_operand(st, inst, &operand);
+	uint32 operand = addr_mode_1(st, inst, null);
 	//计算
 	uint32 result = regv(rd) = regv(rn) - operand;
 	if (s == 1 && rd == 15)

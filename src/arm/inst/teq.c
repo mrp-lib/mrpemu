@@ -13,8 +13,8 @@ int32 arm_inst_teq(cpu_state_t *st, uint32 inst)
 
 	//必要值
 	uint32 rn = inst_b4(16);
-	uint32 operand;
-	bool carry = shifter_operand(st, inst, &operand);
+	bool carry;
+	uint32 operand = addr_mode_1(st, inst, &carry);
 
 	uint32 alu_out = regv(rn) ^ operand;
 
