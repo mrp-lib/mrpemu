@@ -299,8 +299,10 @@ int32 cpu_exec_inst(cpu_state_t *st, uint32 inst)
 					return call_inst(orr);
 				case 0b1101:
 				{
+					//cpy: cond 0 0 0 1 1 0 1 0 SBZ Rd 0 0 0 0 0 0 0 0 Rm
+					//mov: cond 0 0 I 1 1 0 1 S SBZ Rd shifter_operand
 					uint32 i = inst_b1(25);
-					if (s == 0 && i == 0) //cpy
+					if (s == 0 && i == 0 && inst_b8(4) == 0) //cpy
 						return call_inst(cpy);
 					else //mov
 						return call_inst(mov);

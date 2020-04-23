@@ -11,6 +11,7 @@ uint32 _addr_bits(uint32 inst)
 	return bits;
 }
 
+//         I
 //cond 0 0 0 opcode S Rn Rd Rs 0 0 0 1 Rm
 //cond 0 0 0 opcode S Rn Rd Rs 0 0 1 1 Rm
 //cond 0 0 0 opcode S Rn Rd Rs 0 1 0 1 Rm
@@ -35,185 +36,173 @@ uint32 addr_mode_1(cpu_state_t *st, uint32 inst, bool *carry)
 	{
 		uint32 immed8 = inst_b8(0);
 		uint32 imm = inst_b4(8);
-		shifter_operand = ror(immed8, imm * 2);
+		shifter_operand = ror(immed8, imm << 1); //imm*2
 		if (imm == 0)
 		{
 			shifter_carry_out = st->cpsr.c;
 		}
 		else
 		{
-			shifter_carry_out = (shifter_operand >> 31) & 0b1;
+			shifter_carry_out = shifter_operand >> 31;
 		}
 	}
 	//否则表示寄存器偏移（需要保证不是扩展指令集）
 	else
 	{
+		//取4、5、6作为识别码
+		uint32 icode = inst_bm(4, 6);
 		//取得Rm和shift
-		uint32 Rm = st->registers[inst_b4(0)];
-		uint32 shift = inst_bm(5, 6);
-		//第4位为0，使用立即数
-		if ((inst & 0b10000) == 0)
+		uint32 rm = inst_b4(0);
+		uint32 rs = inst_b4(8);
+		uint32 rs07 = regv(rs) & 0x00ff;
+		uint32 rs04 = regv(rs) & 0x000f;
+		uint32 shift_imm = inst_bm(7, 11);
+		switch (icode)
 		{
-			uint32 imm = inst_bm(7, 11);
-			//A5-9
-			if (shift == 0b00)
+		case 0b000:
+			if (shift_imm == 0)
 			{
-				// A5-8、 A5-9
-				if (imm == 0)
-				{
-					shifter_operand = Rm;
-					shifter_carry_out = st->cpsr.c;
-				}
-				else
-				{
-					shifter_operand = lsl(Rm, imm);
-					shifter_carry_out = (shifter_operand >> (32 - imm)) & 0b1;
-				}
-			}
-			//A5-11
-			else if (shift == 0b01)
-			{
-				//如果shift_imm为0
-				if (imm == 0)
-				{
-					shifter_operand = 0;
-					shifter_carry_out = (Rm >> 31) & 0b1;
-				}
-				else
-				{
-					shifter_operand = lsr(Rm, imm);
-					shifter_carry_out = (Rm >> (imm - 1)) & 0b1;
-				}
-			}
-			//A5-13
-			else if (shift == 0b10)
-			{
-				if (imm == 0)
-				{
-					uint32 Rm31 = (Rm >> 31) & 0b1;
-					if (Rm31 == 0)
-					{
-						shifter_operand = 0;
-						shifter_carry_out = Rm31;
-					}
-					else
-					{
-						shifter_operand = 0xffffffff;
-						shifter_carry_out = Rm31;
-					}
-				}
-				else
-				{
-					shifter_operand = asr(Rm, imm);
-					shifter_carry_out = Rm >> (imm - 1) & 0b1;
-				}
-			}
-			//A5-15
-			else
-			{
-				//循环右移扩展 (参考: A5-17)
-				if (imm == 0)
-				{
-					shifter_operand = lsr(Rm, 1) | lsl(st->cpsr.c, 31);
-					shifter_carry_out = Rm & 0b1;
-				}
-				else
-				{
-					shifter_operand = ror(Rm, imm);
-					shifter_carry_out = Rm >> (imm - 1) & 0b1;
-				}
-			}
-		}
-		//第4位为1，使用寄存器
-		else
-		{
-			uint32 Rs = st->registers[inst_b4(8)];
-			uint32 Rs07 = Rs & 0b11111111;
-			//对于Rs07为0时，处理方式都是一样的
-			if (Rs07 == 0)
-			{
-				shifter_operand = Rm;
+				shifter_operand = regv(rm);
 				shifter_carry_out = st->cpsr.c;
 			}
 			else
 			{
-				//A5-10
-				if (shift == 0b00)
+				shifter_operand = lsl(regv(rm), shift_imm);
+				shifter_carry_out = (regv(rm) >> (32 - shift_imm)) & 0b01;
+			}
+			break;
+		case 0b001:
+			if (rs07 == 0)
+			{
+				shifter_operand = regv(rm);
+				shifter_carry_out = st->cpsr.c;
+			}
+			else if (rs07 < 32)
+			{
+				shifter_operand = lsl(regv(rm), rs07);
+				shifter_operand = (regv(rm) >> (32 - rs07)) & 0b01;
+			}
+			else if (rs07 == 32)
+			{
+				shifter_operand = 0;
+				shifter_carry_out = regv(rm) & 0b01;
+			}
+			else
+			{
+				shifter_operand = 0;
+				shifter_carry_out = 0;
+			}
+			break;
+		case 0b010:
+			if (shift_imm == 0)
+			{
+				shifter_operand = 0;
+				shifter_carry_out = regv(rm) >> 31;
+			}
+			else
+			{
+				shifter_operand = lsr(regv(rm), shift_imm);
+				shifter_carry_out = (regv(rm) >> (shift_imm - 1)) & 0b01;
+			}
+			break;
+		case 0b011:
+			if (rs07 == 0)
+			{
+				shifter_operand = regv(rm);
+				shifter_carry_out = st->cpsr.c;
+			}
+			else if (rs07 < 32)
+			{
+				shifter_operand = lsr(regv(rm), rs07);
+				shifter_carry_out = (regv(rm) >> (rs07 - 1)) & 0b01;
+			}
+			else if (rs07 == 32)
+			{
+				shifter_operand = 0;
+				shifter_carry_out = regv(rm) >> 31;
+			}
+			else
+			{
+				shifter_operand = 0;
+				shifter_carry_out = 0;
+			}
+			break;
+		case 0b100:
+			if (shift_imm == 0)
+			{
+				uint32 rm31 = regv(rm) >> 31;
+				if (rm31 == 0)
 				{
-					if (Rs07 < 32)
-					{
-						shifter_operand = lsl(Rm, Rs07);
-						shifter_carry_out = Rm >> (32 - Rs07) & 0b1;
-					}
-					else if (Rs07 == 32)
-					{
-						shifter_operand = 0;
-						shifter_carry_out = Rm & 0b1;
-					}
-					else
-					{
-						shifter_operand = 0;
-						shifter_carry_out = 0;
-					}
+					shifter_operand = 0;
+					shifter_carry_out = rm31;
 				}
-				//A5-12
-				else if (shift == 0b01)
-				{
-					if (Rs07 < 32)
-					{
-						shifter_operand = lsr(Rm, Rs07);
-						shifter_carry_out = Rm >> (Rs07 - 1) & 0b1;
-					}
-					else if (Rs07 == 32)
-					{
-						shifter_operand = 0;
-						shifter_carry_out = (Rm >> 31) & 0b1;
-					}
-					else
-					{ //Rs07>32
-						shifter_operand = 0;
-						shifter_carry_out = 0;
-					}
-				}
-				//A5-14
-				else if (shift == 0b10)
-				{
-					if (Rs07 < 32)
-					{
-						shifter_operand = asr(Rm, Rs07);
-						shifter_carry_out = Rm >> (Rs07 - 1) & 0b1;
-					}
-					else
-					{
-						uint32 Rm31 = (Rm >> 31) & 0b1;
-						if (Rm31 == 0)
-						{
-							shifter_operand = 0;
-							shifter_carry_out = Rm31;
-						}
-						else
-						{
-							shifter_operand = 0xffffffff;
-							shifter_carry_out = Rm31;
-						}
-					}
-				}
-				//A5-16
 				else
 				{
-					uint32 Rs04 = Rs & 0b1111;
-					if (Rs04 == 0)
-					{
-						shifter_operand = Rm;
-						shifter_carry_out = (Rm >> 31) & 0b1;
-					}
-					else
-					{
-						shifter_operand = ror(Rm, Rs04);
-						shifter_carry_out = Rm >> (Rs04 - 1) & 0b1;
-					}
+					shifter_operand = 0xffffffff;
+					shifter_carry_out = rm31;
 				}
 			}
+			else
+			{
+				shifter_operand = asr(regv(rm), shift_imm);
+				shifter_carry_out = (regv(rm) << (shift_imm - 1)) & 0b01;
+			}
+			break;
+		case 0b101:
+			if (rs07 == 0)
+			{
+				shifter_operand = regv(rm);
+				shifter_carry_out = st->cpsr.c;
+			}
+			else if (rs07 < 32)
+			{
+				shifter_operand = asr(regv(rm), rs07);
+				shifter_carry_out = (regv(rm) >> (rs07 - 1)) & 0b01;
+			}
+			else
+			{
+				uint32 rm31 = regv(rm) >> 31;
+				if (rm31 == 0)
+				{
+					shifter_operand = 0;
+					shifter_carry_out = rm31;
+				}
+				else
+				{
+					shifter_operand = 0xffffffff;
+					shifter_carry_out = rm31;
+				}
+			}
+			break;
+		case 0b110:
+			if (shift_imm == 0)
+			{
+				shifter_operand = lsl((uint32)st->cpsr.c, 31) | lsr(regv(rm), 1);
+				shifter_carry_out = regv(rm) & 0b01;
+			}
+			else
+			{
+				shifter_operand = ror(regv(rm), shift_imm);
+				shifter_carry_out = (regv(rm) >> (shift_imm - 1)) & 0b01;
+			}
+			break;
+		case 0b111:
+			if (rs07 == 0)
+			{
+				shifter_operand = regv(rm);
+				shifter_carry_out = st->cpsr.c;
+			}
+			else if (rs04 == 0)
+			{
+				shifter_operand = regv(rm);
+				shifter_carry_out = regv(rm) >> 31;
+			}
+			else
+			{
+				shifter_operand = ror(regv(rm), rs04);
+				shifter_carry_out = (regv(rm) >> (rs04 - 1)) & 0b01;
+			}
+			break;
 		}
 	}
 	//特别处理pc

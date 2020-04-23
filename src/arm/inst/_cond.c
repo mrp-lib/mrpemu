@@ -30,9 +30,9 @@ bool check_cond(cpu_state_t *st, uint32 inst)
 	case 0x0000000b: //lt
 		return st->cpsr.n != st->cpsr.v;
 	case 0x0000000c: //gt
-		return st->cpsr.z == 0 && st->cpsr.n == st->cpsr.v;
+		return !st->cpsr.z && st->cpsr.n == st->cpsr.v;
 	case 0x0000000d: //le
-		return st->cpsr.z == 1 || st->cpsr.n != st->cpsr.v;
+		return st->cpsr.z || st->cpsr.n != st->cpsr.v;
 	case 0x0000000e:
 		return true;
 	default:
