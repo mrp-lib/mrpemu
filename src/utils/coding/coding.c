@@ -29,7 +29,7 @@ const unsigned char *GBCodeToUnicode(unsigned char *gbCode)
 	return p_map;
 }
 
-// 查找一个unicode字符对应的gb编码
+//查找一个unicode字符对应的gb编码
 static uint16 Unicode2GB(uint16 ucs)
 {
 	int First = 0;

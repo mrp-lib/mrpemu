@@ -6,6 +6,8 @@
 #include "mrp.h"
 #include "common/tools.h"
 
+#include "helper/dev.h"
+
 static int16 c_func_tab[] = {
 	SWI_MR_MALLOC,
 	SWI_MR_FREE,
@@ -40,7 +42,7 @@ static int16 c_func_tab[] = {
 	SWI_MR_PRINTF,
 	SWI_MR_MEM_GET,
 	SWI_MR_MEM_FREE,
-	SWI_MR_DRAWBITMAP,
+	SWI_MR_REFRESHBUFFER,
 	SWI_MR_GETCHARBITMAP,
 	SWI_MR_TIMERSTART,
 	SWI_MR_TIMERSTOP,
@@ -146,7 +148,7 @@ static int16 c_func_tab[] = {
 
 	SWI_MR_DISPUPEX,
 	SWI_MR_DRAWPOINT,
-	SWI_MR_DRAWBITMAP1,
+	SWI_MR_DRAWBITMAP,
 	SWI_MR_DRAWBITMAPEX,
 	SWI_MR_DRAWRECT,
 	SWI_MR_DRAWTEXT,
@@ -228,6 +230,9 @@ void vm_free(vm_info_t *vm)
 		return;
 
 	logi("vm_free(vm=%p)", vm);
+
+	//释放字体
+	font_free(vm);
 
 	//释放CPU
 	if (vm->cpu != null)
@@ -397,6 +402,7 @@ void vm_install_func(vm_info_t *vm)
 	}
 }
 
+bool put_stack = false;
 uint32 vm_run(vm_info_t *vm, uint32 pc)
 {
 	vm->cpu->registers[r_lr] = 0;  //先设置lr寄存器位0，以便函数调用结束后pc为0
@@ -406,8 +412,15 @@ uint32 vm_run(vm_info_t *vm, uint32 pc)
 	while (vm->cpu->registers[r_pc] != 0)
 	{
 		uint32 inst = cpu_fetch_inst(vm->cpu); //取指令
-		cpu_exec_inst(vm->cpu, inst);		   //执行指令
-											   // cpu_print_regs(vm->cpu);
+		if (inst == 0xe0828001 || inst == 0xe1d100b4)
+		{
+			println("暂停");
+			put_stack = true;
+		}
+		// if (put_stack)
+		// 	dev_pup_stach(vm);
+		cpu_exec_inst(vm->cpu, inst); //执行指令
+									  //    cpu_print_regs(vm->cpu);
 	}
 
 	//返回函数执行后的返回结果

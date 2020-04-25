@@ -56,8 +56,8 @@ uint32 mem_ld32(memory_t *mem, uint32 addr)
 //获取一个16位的数据
 uint16 mem_ld16(memory_t *mem, uint32 addr)
 {
-	uint16 addr_align = (addr >> 1) << 1;	//对齐的地址(16位(2字节，所以除以2)对齐)
-	uint16 addr_shift = (addr & 0b01) << 3; //需要左移的位数 = 偏移的地址*8 (?一个字节8位)
+	uint32 addr_align = (addr >> 1) << 1;	//对齐的地址(16位(2字节，所以除以2)对齐)
+	uint32 addr_shift = (addr & 0b01) << 3; //需要左移的位数 = 偏移的地址*8 (?一个字节8位)
 	//从该地址取出数据
 	uint16 result = mem_ld(uint16, addr_align);
 	//进行循环左移

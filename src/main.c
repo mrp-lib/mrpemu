@@ -9,14 +9,16 @@
 
 #include "arm.h"
 #include "mrp.h"
+
 #include "utils/array.h"
 #include "utils/gzip.h"
+#include "utils/coding.h"
 
 #define memSize (1024 * 1024 * 2);
 
 int32 test_mrp()
 {
-	char *file = "%sdcard/mythroad/Helloworld_240.mrp";
+	char *file = "%sdcard/mythroad/Helloworld_176.mrp";
 
 	//创建虚拟机
 	vm_info_t *vm = vm_create(1024 * 400);
@@ -29,9 +31,6 @@ int32 test_mrp()
 	vm_setSystemInfo(vm, "IMEI", "IMSI", "YIZHI", "MRPEMU");
 	vm_setStorage(vm, "sdcard/", "mythroad/");
 
-	//初始化字体
-	xl_font_sky16_init(vm);
-
 	//启动mrp
 	mr_start_dsmC(vm, file);
 
@@ -40,21 +39,8 @@ int32 test_mrp()
 	return 0;
 }
 
-int main(int32 argc, char **argv)
+int test_elf()
 {
-	{
-		// char cwd[1024] = {0};
-		// getcwd(cwd, 1024);
-		// println("CWD: %s", cwd);
-		// println("ARGS:");
-		// for (uint32 i = 0; i < argc; i++)
-		// {
-		// 	println("\t[%2d]  %s", i + 1, *(argv + i));
-		// }
-	}
-	// println("%s");
-	return test_mrp();
-
 	//打开测试用到的elf文件
 	elf_head_t head;
 	elf_sec_head_t *secs;
@@ -124,4 +110,10 @@ int main(int32 argc, char **argv)
 	cpu_destory(st);
 
 	return 0;
+}
+
+int main(int32 argc, char **argv)
+{
+	return test_mrp();
+	// return test_elf();
 }

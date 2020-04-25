@@ -5,6 +5,7 @@
 #include "common/type.h"
 #include "arm.h"
 #include "helper/mr.h"
+#include "sys/font.h"
 
 #define VM_MEM_OFFSET 0x10		  //内存装载偏移量
 #define VM_MAX_PIXELS (480 * 800) //最大分辨率
@@ -40,6 +41,11 @@ typedef struct vm_mem_map_st
 
 	/*显存*/
 	uint16 video[VM_MAX_PIXELS];
+
+	/*
+	字体信息，必要的时候会自动加载，虚拟机释放时自动释放。
+	*/
+	font_info_t font;
 
 	/*mr函数表，这里存的是函数具体的地址*/
 	uint32 mr_func_tab[200];

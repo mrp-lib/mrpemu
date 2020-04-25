@@ -1,239 +1,99 @@
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include "mrp.h"
 
-typedef struct
+bool bitmap_has_bit(uint8 *bitmap, uint32 n)
 {
-	char *bitbuf;
-	char *filename; //字体文件名
-	long f;			//文件指针
-	long font_size; //字号
-	long ansi_size; //ansi字符宽度
-	int width;
-	int height;
-} FONT;
-
-typedef struct
-{
-	char width[128];
-	char height[128];
-
-} FONT_ANSI; //所有ansi字符宽高
-
-FONT_ANSI *font_ansi;
-
-FONT *font_sky16;
-char font_sky16_bitbuf[32];
-FILE *file;
-int font_sky16_font_size = 16;
-int font_sky16_ansi_size = 8;
-
-//字体初始化，打开字体文件
-int xl_font_sky16_init(vm_info_t *vm)
-{
-	logi("xl_font_sky16_init()");
-
-	if (file)
-		return 0;
-
-	int id = 0;
-
-	font_sky16 = malloc(sizeof(FONT));
-	font_ansi = malloc(sizeof(FONT_ANSI));
-
-	file = open_file(vm, "system/gb16_mrpoid.uc2", "rb");
-	if (file == null)
-	{
-		logw("字体加载失败");
-		return -1;
-	}
-	logi("字体加载成功 fd=%p", file);
-
-	while (id < 128)
-	{
-		font_ansi->width[id] = 8;
-		font_ansi->height[id] = 16;
-		id++;
-	}
-	font_sky16_font_size = 16;
-
-	font_sky16_ansi_size = 8;
-
-	return 0;
+	bitmap += n / 8;
+	return (0x80 >> (n % 8)) & *bitmap;
 }
 
-//关闭字体
-int xl_font_sky16_close()
+int32 font_init(vm_info_t *vm)
 {
-	logi("xl_font_sky16_close()");
-	if (!file)
-		return 0;
-	return fclose(file);
+	if (vm->mem->font.buf != null)
+		return MR_SUCCESS;
+
+	//字体名称
+	char fontfile[MAX_FILE_PATH_LEN] = {0};
+	sprintf(fontfile, "%s%ssystem/gb16.uc2", mrst.sysinfo.sdcard_dir, mrst.sysinfo.dsm_dir);
+
+	//文件长度
+	struct stat s;
+	int ret = stat(fontfile, &s);
+	if (ret != 0)
+		return MR_FAILED;
+
+	//打开文件
+	FILE *fd = fopen(fontfile, "rb");
+	if (!fd)
+		return MR_FAILED;
+
+	//读取字体内容
+	uint8 *buf = (uint8 *)malloc(s.st_size);
+	if (s.st_size != fread(buf, 1, s.st_size, fd))
+	{
+		fclose(fd);
+		return MR_FAILED;
+	}
+
+	vm->mem->font.buf = buf;
+	vm->mem->font.size = 16;
+	vm->mem->font.len = s.st_size;
+	vm->mem->font.chlen = 32; //(size * size) / 8;
+
+	return MR_SUCCESS;
 }
 
-void dpoint(vm_info_t *vm, int x, int y, int color)
+void font_free(vm_info_t *vm)
 {
-	if (x < 0 || x >= mrst.sysinfo.screen_width || y < 0 || y >= mrst.sysinfo.screen_height)
+	if (vm->mem->font.buf == null)
 		return;
-	*(vm->mem->video + y * mrst.sysinfo.screen_width + x) = color;
+	free(vm->mem->font.buf);
 }
 
-//获取二进制缓存里指定像素的值
-int xl_font_sky16_getfontpix(char *buf, int n)
+uint8 *font_get_bitmap(vm_info_t *vm, uint16 ch)
 {
-	//计算在第几个字节，从0开始
-	buf += n / 8;
-	//计算在第几位n%8
-	return (128 >> (n % 8)) & *buf;
+	//取得点阵
+	return memcpy(vm->mem->font.bitmapBuf, vm->mem->font.buf + vm->mem->font.chlen * ch, vm->mem->font.chlen);
 }
 
-//获取字体第n个点信息
-int getfontpix(char *buf, int n)
+int32 font_ch_width(vm_info_t *vm, uint16 ch)
 {
-	//计算在第几个字节，从0开始
-	buf += n / 8;
-	//计算在第几位n%8
-	return (128 >> (n % 8)) & *buf;
+	//普通ASCII字符
+	if (ch < 0x80)
+		return vm->mem->font.size >> 1; //宽度=字体大小/2
+
+	//其他字符
+	return vm->mem->font.size;
 }
 
-//获得字符的位图
-char *xl_font_sky16_getChar(uint16 id)
+int32 font_text_width(vm_info_t *vm, uint16 *str)
 {
-	logi("xl_font_sky16_getChar(%x)", id);
-	fseek(file, id * 32, SEEK_SET);
-	fread(font_sky16_bitbuf, 1, 32, file);
-	return font_sky16_bitbuf;
+	//逐个取长度并相加
+	uint32 len = 0;
+	while (*str)
+		len += font_ch_width(vm, *(str++));
+	return len;
 }
 
-//画一个字
-char *xl_font_sky16_drawChar(vm_info_t *vm, uint16 id, int x, int y, uint16 color)
+int32 font_ch_draw(vm_info_t *vm, int32 x, int32 y, uint16 ch, uint16 color)
 {
-	fseek(file, id * 32, SEEK_SET);
-	fread(font_sky16_bitbuf, 1, 32, file);
-	int y2 = y + 16; //font_sky16_font_size;
-	int n = 0;
+	uint8 *bmp = font_get_bitmap(vm, ch);
+	uint32 fw = font_ch_width(vm, ch);
 
-	int ix = x;
-	int iy;
-	for (iy = y; iy < y2; iy++)
+	for (uint32 dy = 0; dy < vm->mem->font.size; dy++)
 	{
-
-		ix = x;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-		if (getfontpix(font_sky16_bitbuf, n))
-			dpoint(vm, ix, iy, color);
-		n++;
-		ix++;
-	}
-	return font_sky16_bitbuf;
-}
-
-//获得换行文本的高度
-int xl_font_sky16_textWidthHeightLines(uint8 *pcText, uint16 showWidth, int32 *width, int32 *height, int32 *lines)
-{
-	return 0;
-}
-
-//获取一个文字的宽高
-void xl_font_sky16_charWidthHeight(uint16 id, int32 *width, int32 *height)
-{
-	logi("xl_font_sky16_charWidthHeight(%x, %p, %p)", id, width, height);
-
-	if (id < 128)
-	{
-		if (width)
+		for (uint32 dx = 0; dx < fw; dx++)
 		{
-			*width = font_ansi->width[id];
+			if (!bitmap_has_bit(bmp, dy * vm->mem->font.size + dx))
+			{
+				printf("   ");
+				continue;
+			}
+			*(vm->mem->video + (dy + y) * mrst.sysinfo.screen_width + (dx + x)) = color;
+			printf(" o ");
 		}
-		if (height)
-		{
-			*height = font_ansi->height[id];
-		}
-	}
-	else
-	{
-		if (width)
-		{
-			*width = 16;
-		}
-		if (height)
-		{
-			*height = 16;
-		}
-	}
-}
-
-//获取单行文字的宽高
-void xl_font_sky16_textWidthHeight(char *text, int32 *width, int32 *height)
-{
-	int textIdx = 0;
-	int id;
-	int fontw = 0, fonth = 0;
-	while (text[textIdx] != 0)
-	{
-		id = (text[textIdx] << 8) + (text[textIdx + 1]);
-		xl_font_sky16_charWidthHeight(id, &fontw, &fonth);
-		(*width) += fontw;
-		(*height) += fonth;
-		textIdx += 2;
+		printf("\n");
 	}
 }

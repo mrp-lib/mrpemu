@@ -88,18 +88,32 @@ void handle_interapt(vm_info_t *vm, uint32 nu)
 	case SWI_MR_WSTRLEN:
 		return swi_mr_wstrlen(vm);
 
-	case SWI_MR_DRAWBITMAP:
-		return swi_mr_drawBitmap(vm);
+	case SWI_MR_DRAWPOINT:
+		return swi_mr_drawPoint(vm);
+	case SWI_MR_REFRESHBUFFER:
+		return swi_mr_refreshBuffer(vm);
 	case SWI_MR_DRAWRECT:
 		return swi_mr_drawRect(vm);
 	case SWI_MR_DRAWTEXT:
 		return swi_mr_drawText(vm);
+	case SWI_MR_DRAWTEXTEX:
+		return swi_mr_drawTextEx(vm);
+	case SWI_MR_GETCHARBITMAP:
+		return swi_mr_getCharBitmap(vm);
+	case SWI_MR_PLATDRAWCHAR:
+		return swi_mr_platDrawChar(vm);
 
 	case SWI_MR_GETSCREENINFO:
 		return swi_mr_getScreenInfo(vm);
 
 	case SWI_MR_C_FUNCTION_NEW:
 		return swi_mr_c_function_new(vm);
+
+	case SWI_MR_DIV:
+		return swi_mr_div(vm);
+	case SWI_MR_MOD:
+		return swi_mr_mod(vm);
+
 	//平台的一些调用
 	case SWI_MR_TESTCOM:
 		return swi_mr_testcom(vm);

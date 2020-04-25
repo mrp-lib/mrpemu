@@ -1,7 +1,5 @@
 include make/Makefile.cfg
 
-#链接库目录
-LIB_DIR			:= /mnt/c/Users/Administrator/Desktop/libiconv-1.16/build/
 # 链接库列表
 LIBS			:= libiconv
 # 要单独编译的文件，这些文件相对于SRC_DIR目录
