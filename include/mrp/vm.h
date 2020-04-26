@@ -47,6 +47,12 @@ typedef struct vm_mem_map_st
 	*/
 	font_info_t font;
 
+	/*
+	这里面存储的是一些指针，在mr_func_tab中会遇到一些指向指针的指针，把那些部分存在这里
+	为了简单，也分配和mr_func_tab相等大小的空间，这样也就可以一一对应了。
+	*/
+	uint32 mr_func_tab_p[200];
+
 	/*mr函数表，这里存的是函数具体的地址*/
 	uint32 mr_func_tab[200];
 

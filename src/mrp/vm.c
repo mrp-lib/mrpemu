@@ -8,6 +8,8 @@
 
 #include "helper/dev.h"
 
+#define vm_mem_poffset(n) (vm_mem_offset(&vm->mem->mr_func_tab_p) + ((n) << 2));
+
 static int16 c_func_tab[] = {
 	SWI_MR_MALLOC,
 	SWI_MR_FREE,
@@ -280,6 +282,7 @@ void vm_install_func(vm_info_t *vm)
 	uint32 tlen = sizeof(c_func_tab) / sizeof(int16);
 	for (uint32 i = 0; i < tlen; i++)
 	{
+		// logi("load_funcTable: I=0x%04x(%d), V=0x%08x(%d)", i, i, c_func_tab[i], c_func_tab[i]);
 		if (c_func_tab[i] == 0)
 			continue;
 		else if (c_func_tab[i] > 0)
@@ -311,6 +314,11 @@ void vm_install_func(vm_info_t *vm)
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.mem_state.free);
 				break;
 			//屏幕相关的
+			case DATAP_SCREENBUF:
+				// uint16 **
+				vm->mem->mr_func_tab_p[i] = vm_mem_offset(&vm->mem->video);
+				vm->mem->mr_func_tab[i] = vm_mem_poffset(i); //vm_mem_offset(&vm->mem->mr_func_tab_p) + i;
+				break;
 			case DATAP_SCREENWIDTH:
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.sysinfo.screen_width);
 				break;
@@ -319,9 +327,6 @@ void vm_install_func(vm_info_t *vm)
 				break;
 			case DATAP_SCREENBIT:
 				vm->mem->mr_func_tab[i] = vm_mem_offset(&mrst.sysinfo.screen_bits);
-				break;
-			case DATAP_SCREENBUF:
-				vm->mem->mr_func_tab[i] = vm_mem_offset(&vm->mem->video);
 				break;
 			//mrp包信息
 			case DATAP_PACK_FILENAME:
@@ -412,9 +417,9 @@ uint32 vm_run(vm_info_t *vm, uint32 pc)
 	while (vm->cpu->registers[r_pc] != 0)
 	{
 		uint32 inst = cpu_fetch_inst(vm->cpu); //取指令
-		if (inst == 0xe0828001 || inst == 0xe1d100b4)
+		if (inst == 0xe5101008)
 		{
-			println("暂停");
+			// println("暂停");
 			put_stack = true;
 		}
 		// if (put_stack)

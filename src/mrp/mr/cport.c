@@ -162,7 +162,7 @@ void swi_mr_sprintf(vm_info_t *vm)
 
 void swi_mr_printf(vm_info_t *vm)
 {
-	//TODO 待实现
+	printf("this is printf\n");
 }
 
 void swi_mr_wstrlen(vm_info_t *vm)

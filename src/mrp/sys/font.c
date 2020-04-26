@@ -87,13 +87,8 @@ int32 font_ch_draw(vm_info_t *vm, int32 x, int32 y, uint16 ch, uint16 color)
 		for (uint32 dx = 0; dx < fw; dx++)
 		{
 			if (!bitmap_has_bit(bmp, dy * vm->mem->font.size + dx))
-			{
-				printf("   ");
 				continue;
-			}
 			*(vm->mem->video + (dy + y) * mrst.sysinfo.screen_width + (dx + x)) = color;
-			printf(" o ");
 		}
-		printf("\n");
 	}
 }
