@@ -29,5 +29,6 @@ void swi_mr_rmDir(vm_info_t *vm);
 void swi_mr_findStart(vm_info_t *vm);
 void swi_mr_findGetNext(vm_info_t *vm);
 void swi_mr_findStop(vm_info_t *vm);
+void swi_mr_readFile(vm_info_t *vm);
 
 #endif

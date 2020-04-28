@@ -130,7 +130,7 @@ void swi_mr_refreshBuffer(vm_info_t *vm)
 	int32 y = vmreg(2);
 	int32 w = vmreg(3);
 	int32 h = vmstack(0);
-	logsysc("mr_drawBitmap(bmp=0x%08x, x=%d, y=%d, w=%d, h=%d)", _mbp, x, y, w, h);
+	logsysc("mr_refreshBuffer(bmp=0x%08x, x=%d, y=%d, w=%d, h=%d)", _mbp, x, y, w, h);
 
 	//调用函数进行刷新
 	if (vm->onRefresh == null)
@@ -170,4 +170,201 @@ void swi_mr_getCharBitmap(vm_info_t *vm)
 
 	uint8 *addr = font_get_bitmap(vm, ch);
 	mr_ret(vm_mem_offset(addr));
+}
+
+void swi_mr_drawBitmap(vm_info_t *vm)
+{
+	//原型： (uint16* p, int16 x, int16 y, uint16 w, uint16 h, uint16 rop, uint16 transcoler, int16 sx, int16 sy, int16 mw) -> void
+	vmpt _p = vmreg(0);
+	uint16 *p = vmpt_real(uint16, _p);
+	int16 x = vmreg(1);
+	int16 y = vmreg(2);
+	uint16 w = vmreg(3);
+	uint16 h = vmstack(0);
+	uint16 rop = vmstack(1);
+	uint16 transcoler = vmstack(2);
+	int16 sx = vmstack(3);
+	int16 sy = vmstack(4);
+	int16 mw = vmstack(5);
+	logsysc("mr_drawBitmap(p=0x%08x, x=%d, y=%d, w=%d, h=%d, rop=%d, transcoler=%d, sx=%d, sy=%d, mw=%d)", _p, x, y, w, h, rop, transcoler, sx, sy, mw);
+
+	uint16 *dstp, *srcp;
+	int MaxY = min(sh, y + h);
+	int MaxX = min(sw, x + w);
+	int MinY = max(0, y);
+	int MinX = max(0, x);
+	uint16 dx, dy;
+
+	if (rop > MR_SPRITE_TRANSPARENT)
+	{
+		uint16 BitmapRop = rop & MR_SPRITE_INDEX_MASK;
+		uint16 BitmapMode = (rop >> MR_TILE_SHIFT) & 0x3;
+		uint16 BitmapFlip = (rop >> MR_TILE_SHIFT) & 0x4;
+		switch (BitmapRop)
+		{
+		case BM_TRANSPARENT:
+			for (dy = MinY; dy < MaxY; dy++)
+			{
+				dstp = scr_point(MinX, dy);
+				srcp = p + (dy - y) * w + (MinX - x);
+				for (dx = MinX; dx < MaxX; dx++)
+				{
+					if (*srcp != transcoler)
+						*dstp = *srcp;
+					dstp++;
+					srcp++;
+				}
+			}
+			break;
+		case BM_COPY:
+			switch (BitmapMode)
+			{
+			case MR_ROTATE_0:
+				if (MaxX > MinX)
+				{
+					for (dy = MinY; dy < MaxY; dy++)
+					{
+						dstp = scr_point(MinX, dy);
+						srcp = BitmapFlip ? p + (h - 1 - (dy - y)) * w + (MinX - x) : p + (dy - y) * w + (MinX - x);
+						memcpy(dstp, srcp, (MaxX - MinX) << 1);
+					}
+				}
+				break;
+			case MR_ROTATE_90:
+				for (dy = MinY; dy < MaxY; dy++)
+				{
+					dstp = scr_point(MinX, dy);
+					srcp = BitmapFlip ? p + (h - 1 - (MinX - x)) * w + (w - 1 - (dy - y)) : p + (MinX - x) * w + (w - 1 - (dy - y));
+					for (dx = MinX; dx < MaxX; dx++)
+					{
+						*dstp = *srcp;
+						dstp++;
+						srcp = BitmapFlip ? srcp - w : srcp + w;
+					}
+				}
+				break;
+			case MR_ROTATE_180:
+				for (dy = MinY; dy < MaxY; dy++)
+				{
+					dstp = scr_point(MinX, dy);
+					srcp = BitmapFlip ? p + (dy - y) * w + (w - 1 - (MinX - x)) : p + (h - 1 - (dy - y)) * w + (w - 1 - (MinX - x));
+					for (dx = MinX; dx < MaxX; dx++)
+					{
+						*dstp = *srcp;
+						dstp++;
+						srcp--;
+					}
+				}
+				break;
+			case MR_ROTATE_270:
+				for (dy = MinY; dy < MaxY; dy++)
+				{
+					dstp = scr_point(MinX, dy);
+					srcp = BitmapFlip ? p + (MinX - x) * w + (dy - y) : p + (h - 1 - (MinX - x)) * w + (dy - y);
+					for (dx = MinX; dx < MaxX; dx++)
+					{
+						*dstp = *srcp;
+						dstp++;
+						srcp = BitmapFlip ? srcp + w : srcp - w;
+					}
+				}
+				break;
+			}
+		}
+	}
+	else
+	{
+		switch (rop)
+		{
+		case BM_TRANSPARENT:
+			for (dy = MinY; dy < MaxY; dy++)
+			{
+				dstp = scr_point(MinX, dy);
+				srcp = p + (dy - y + sy) * mw + (MinX - x + sx);
+				for (dx = MinX; dx < MaxX; dx++)
+				{
+					if (*srcp != transcoler)
+						*dstp = *srcp;
+					dstp++;
+					srcp++;
+				}
+			}
+			break;
+		case BM_COPY:
+			if (MaxX > MinX)
+			{
+				for (dy = MinY; dy < MaxY; dy++)
+				{
+					dstp = scr_point(MinX, dy);
+					srcp = p + (dy - y + sy) * mw + (MinX - x + sx);
+					memcpy(dstp, srcp, (MaxX - MinX) << 1);
+				}
+			}
+			break;
+		case BM_GRAY:
+		case BM_OR:
+		case BM_XOR:
+		case BM_NOT:
+		case BM_MERGENOT:
+		case BM_ANDNOT:
+		case BM_AND:
+		case BM_REVERSE:
+			for (dy = MinY; dy < MaxY; dy++)
+			{
+				dstp = scr_point(MinX, dy);
+				srcp = p + (dy - y + sy) * mw + (MinX - x + sx);
+				for (dx = MinX; dx < MaxX; dx++)
+				{
+					switch (rop)
+					{
+					case BM_GRAY:
+						if (*srcp != transcoler)
+						{
+							uint32 color_old = *srcp;
+							uint32 r, g, b;
+#ifdef MR_SCREEN_CACHE_BITMAP
+							r = ((color_old & 0x7c00) >> 10);
+							g = ((color_old & 0x3e0) >> 5);
+							b = ((color_old & 0x1f));
+#else
+							r = ((color_old & 0xf800) >> 11);
+							g = ((color_old & 0x7e0) >> 6);
+							b = ((color_old & 0x1f));
+#endif
+							r = (r * 60 + g * 118 + b * 22) / 25;
+							*dstp = mkrgb(r, r, r);
+						}
+						break;
+					case BM_REVERSE:
+						if (*srcp != transcoler)
+						{
+							*dstp = ~*srcp;
+						}
+						break;
+					case BM_OR:
+						*dstp = (*srcp) | (*dstp);
+						break;
+					case BM_XOR:
+						*dstp = (*srcp) ^ (*dstp);
+						break;
+					case BM_NOT:
+						*dstp = ~(*srcp);
+						break;
+					case BM_MERGENOT:
+						*dstp = (~*srcp) | (*dstp);
+						break;
+					case BM_ANDNOT:
+						*dstp = (~*srcp) & (*dstp);
+						break;
+					case BM_AND:
+						*dstp = (*srcp) & (*dstp);
+						break;
+					}
+					dstp++;
+					srcp++;
+				}
+			}
+			break;
+		}
+	}
 }

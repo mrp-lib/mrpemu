@@ -10,9 +10,10 @@
 
 #define MR_READ_MAX_LEN (1024 * 400) //读取mrp时分配的最大内存空间，额，800k足够用了吧
 
-uint32 read_mrp_file(vm_info_t *vm, char *filename, uint8 *buffer)
+uint8 *read_mrp_file(vm_info_t *vm, char *filename, uint32 *len, bool lookfor)
 {
 	uint32 buflen = 0;
+	uint8 *buffer = (uint8 *)malloc(MR_READ_MAX_LEN);
 	//如果是固化应用
 	if (mrst.pack_filename[0] == '*' || mrst.pack_filename[0] == '$')
 	{
@@ -23,14 +24,25 @@ uint32 read_mrp_file(vm_info_t *vm, char *filename, uint8 *buffer)
 		//打开mrp文件
 		mrp_reader_t *reader = mrp_open(mrst.pack_filename);
 		if (reader == null)
-			return 0;
+		{
+			free(buffer);
+			return null;
+		}
 
 		//看看是否存在给定文件
 		mrp_file_info *file = mrp_file(reader, filename);
 		if (file == null)
 		{
 			mrp_close(reader);
-			return 0;
+			free(buffer);
+			return null;
+		}
+
+		//如果只是为了看看是否存在，则返回1，已经存在了
+		if (lookfor)
+		{
+			free(buffer);
+			return (void *)1;
 		}
 
 		//读取文件
@@ -38,7 +50,8 @@ uint32 read_mrp_file(vm_info_t *vm, char *filename, uint8 *buffer)
 		if (0 != ret)
 		{
 			mrp_close(reader);
-			return 0;
+			free(buffer);
+			return null;
 		}
 
 		//读取完成
@@ -57,21 +70,27 @@ uint32 read_mrp_file(vm_info_t *vm, char *filename, uint8 *buffer)
 		uint32 zlen;
 		uint8 *dst = ungzip(buffer, buflen, null, &zlen);
 		if (dst == null)
-			return 0;
+		{
+			free(buffer);
+			return null;
+		}
 		//拷贝过去
 		memcpy(buffer, dst, zlen);
 		buflen = zlen;
 	}
 
-	return buflen;
+	//处理返回
+	if (len != null)
+		*len = buflen;
+	return buffer;
 }
 
 int32 do_ext(vm_info_t *vm, char *filename)
 {
 	//读取ext文件
-	uint8 *ext_data = malloc(MR_READ_MAX_LEN);
-	uint32 len = read_mrp_file(vm, filename, ext_data);
-	if (len)
+	uint32 len;
+	uint8 *ext_data = read_mrp_file(vm, filename, &len, false);
+	if (len && ext_data)
 	{
 		//读取之后装入到虚拟机内存
 		vmpt addr = mem_malloc(vm, len);			   //分配虚拟机内存

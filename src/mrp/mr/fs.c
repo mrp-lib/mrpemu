@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -28,7 +29,6 @@ void swi_mr_open(vm_info_t *vm)
 	uint32 mode = vmreg(1);
 	char *filename = vmpt_real(char, _filename);
 	logsysc("mr_open(filename=%s, mode=%d)", filename, mode);
-
 
 	int new_mode = 0;
 	if (mode & MR_FILE_RDONLY)
@@ -346,4 +346,34 @@ void swi_mr_findStop(vm_info_t *vm)
 	DIR *pDir = (DIR *)handle;
 
 	mr_ret(closedir(pDir));
+}
+
+void swi_mr_readFile(vm_info_t *vm)
+{
+	//原型： (const char *filename, int32 *filelen, int32 lookfor) -> void*
+	char *filename = vmpt_real(char, vmreg(0));
+	vmpt _filelen = vmreg(1);
+	int32 lookfor = vmreg(2);
+	uint32 *filelen = vmpt_real(uint32, _filelen);
+	logsysc("mr_readFile(filename=%s, filelen=0x%08x, lookfor=%d)", filename, _filelen, lookfor);
+
+	uint8 *buf = read_mrp_file(vm, filename, filelen, lookfor);
+	//空处理
+	if (buf == null)
+	{
+		mr_ret(0);
+	}
+	//如果只是为了看看是否存在，则直接返回了
+	else if (lookfor)
+	{
+		mr_ret(1);
+	}
+	//否则需要拷贝一下内存
+	else
+	{
+		vmpt addr = mem_malloc(vm, *filelen);
+		memcpy(vmpt_real(uint8, addr), buf, *filelen);
+		free(buf);
+		mr_ret(addr);
+	}
 }

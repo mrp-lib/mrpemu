@@ -31,7 +31,7 @@ typedef struct
 	uint32 buflen;
 	uint32 type;
 	// uint16 *p;
-	vmpt p;
+	vmpt buf;
 } mr_bitmap_t;
 
 typedef struct

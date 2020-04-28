@@ -82,6 +82,8 @@ void handle_interapt(vm_info_t *vm, uint32 nu)
 		return swi_mr_findGetNext(vm);
 	case SWI_MR_FINDSTOP:
 		return swi_mr_findStop(vm);
+	case SWI_MR_READFILE:
+		return swi_mr_readFile(vm);
 
 	case SWI_MR_PRINTF:
 		return swi_mr_printf(vm);
@@ -102,6 +104,8 @@ void handle_interapt(vm_info_t *vm, uint32 nu)
 		return swi_mr_getCharBitmap(vm);
 	case SWI_MR_PLATDRAWCHAR:
 		return swi_mr_platDrawChar(vm);
+	case SWI_MR_DRAWBITMAP:
+		return swi_mr_drawBitmap(vm);
 
 	case SWI_MR_GETSCREENINFO:
 		return swi_mr_getScreenInfo(vm);

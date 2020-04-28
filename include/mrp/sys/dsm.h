@@ -15,6 +15,19 @@
 */
 
 /*
+读取mrp文件
+参数：
+	vm			虚拟机
+	filename	内部文件名
+	len			读取到的长度
+	lookfor		仅仅看看有没有文件
+返回：
+	null		失败
+	!null		文件内容，这个指针需要free
+*/
+uint8 *read_mrp_file(vm_info_t *vm, char *filename, uint32 *len, bool lookfor);
+
+/*
 通过入口参数来启动mrp
 参数：
 	vm		虚拟机

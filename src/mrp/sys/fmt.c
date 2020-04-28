@@ -5,8 +5,6 @@
 #include <float.h>
 #include "mrp.h"
 
-#include "printf.h"
-
 #define PRINTF_NTOA_BUFFER_SIZE 32u
 #define PRINTF_FTOA_BUFFER_SIZE 32u
 #define PRINTF_DEFAULT_FLOAT_PRECISION 6u
@@ -559,8 +557,7 @@ static size_t _etoa(out_fct_type out, char *buffer, size_t idx, size_t maxlen, d
 	return idx;
 }
 
-
-static int32 _vsnprintf(out_fct_type out, char *buffer, size_t maxlen, char *format, uint8 *memBase, arg_list *arg)
+static int32 _fmt_vsnprintf(out_fct_type out, char *buffer, size_t maxlen, char *format, uint8 *memBase, arg_list *arg)
 {
 	unsigned int flags, width, precision, n;
 	size_t idx = 0u;
@@ -896,15 +893,15 @@ static int32 _vsnprintf(out_fct_type out, char *buffer, size_t maxlen, char *for
 int32 fmt_printf(char *format, uint8 *memBase, arg_list *arg)
 {
 	char buffer[1];
-	return _vsnprintf(_out_char, buffer, (size_t)-1, format, memBase, arg);
+	return _fmt_vsnprintf(_out_char, buffer, (size_t)-1, format, memBase, arg);
 }
 
 int32 fmt_sprintf(char *buffer, char *format, uint8 *memBase, arg_list *arg)
 {
-	return _vsnprintf(_out_buffer, buffer, (size_t)-1, format, memBase, arg);
+	return _fmt_vsnprintf(_out_buffer, buffer, (size_t)-1, format, memBase, arg);
 }
 
 int32 snprintf_(char *buffer, uint32 count, char *format, uint8 *memBase, arg_list *arg)
 {
-	return _vsnprintf(_out_buffer, buffer, count, format, memBase, arg);
+	return _fmt_vsnprintf(_out_buffer, buffer, count, format, memBase, arg);
 }
