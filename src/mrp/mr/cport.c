@@ -157,12 +157,34 @@ void swi_mr_rand(vm_info_t *vm)
 
 void swi_mr_sprintf(vm_info_t *vm)
 {
-	//TODO 待实现
+	//原型： (char *buf, const char *fmt, ...) -> int
+	char *buf = vmpt_real(char, vmreg(0));
+	char *fmt = vmpt_real(char, vmreg(1));
+	logsysc("mr_sprintf(buf=0x%08x, fmt=%s)", buf, fmt);
+
+	//构建参数
+	arg_list arg = {8, vmreg(0), vmreg(1), vmreg(2), vmreg(3)};
+	uint8 *stack = vm_mem_buf + vmreg(r_sp);
+	memcpy(arg.stack, stack, FMT_STACK_SIZE);
+
+	//调用一下printf
+	int32 ret = fmt_sprintf(buf, fmt, vm_mem_buf, &arg);
+	mr_ret(ret);
 }
 
 void swi_mr_printf(vm_info_t *vm)
 {
-	printf("this is printf\n");
+	//原型： (const char *format,...) -> void
+	char *fmt = vmpt_real(char, vmreg(0));
+	logsysc("mr_printf(fmt=%s)", fmt);
+
+	//构建参数
+	arg_list arg = {4, vmreg(0), vmreg(1), vmreg(2), vmreg(3)};
+	uint8 *stack = vm_mem_buf + vmreg(r_sp);
+	memcpy(arg.stack, stack, FMT_STACK_SIZE);
+
+	//调用一下printf
+	fmt_printf(fmt, vm_mem_buf, &arg);
 }
 
 void swi_mr_wstrlen(vm_info_t *vm)

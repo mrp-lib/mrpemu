@@ -17,6 +17,7 @@
 #include "helper/mr.h"
 
 #include "mrp/sys/dsm.h"
+#include "mrp/sys/fmt.h"
 #include "mrp/sys/font.h"
 #include "mrp/sys/util.h"
 

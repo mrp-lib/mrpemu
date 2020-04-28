@@ -417,7 +417,7 @@ uint32 vm_run(vm_info_t *vm, uint32 pc)
 	while (vm->cpu->registers[r_pc] != 0)
 	{
 		uint32 inst = cpu_fetch_inst(vm->cpu); //取指令
-		if (inst == 0xe5101008)
+		if (inst == 0xe28d0004)
 		{
 			// println("暂停");
 			put_stack = true;

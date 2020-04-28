@@ -14,6 +14,8 @@
 #include "utils/gzip.h"
 #include "utils/coding.h"
 
+#include "mrp/sys/fmt.h"
+
 #define memSize (1024 * 1024 * 2);
 
 int32 test_mrp()
@@ -115,5 +117,6 @@ int test_elf()
 int main(int32 argc, char **argv)
 {
 	return test_mrp();
+	// return testfmt();
 	// return test_elf();
 }
