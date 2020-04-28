@@ -17,8 +17,9 @@ int32 arm_inst_ldrsh(cpu_state_t *st, uint32 inst)
 	uint32 addr = addr_mode_3(st, inst);
 
 	//TODO 其他一些条件不处理了
-	uint8 data = mem_ld16(st->mem, addr);
-	st->registers[rd] = (uint32)sign_extend_e(data);
+	int16 data = mem_ld16(st->mem, addr);
+	// st->registers[rd] = (uint32)sign_extend_e(data);
+	st->registers[rd] = (int32)data;
 
 	return EXEC_SUCCESS;
 }
