@@ -23,7 +23,7 @@
 #define carry(result, num1) ((result) < (num1))													  //检测是否进位(都加上一个数了结果却变小？)
 #define carry8(res) ((res)&0x100)																  //检测是否8位进位(这个简单，只要判断第8位是否为1即可，当然，前提是res应该大于8位)
 #define carry16(res) ((res)&0x10000)															  //检测是否16位进位(同上)
-#define borrow(result, num1) ((result) > (num1))												  //检测是否借位(都减掉一个数了结果却变大？)
+// #define borrow(result, num1) ((result) > (num1))												  //检测是否借位(都减掉一个数了结果却变大？)
 #define borrow8(res) ((res)&0x100)																  //检测是否8位借位(这个和8位的进位一样的，借位后第8位是1)
 #define borrow16(res) ((res)&0x10000)															  //检测是否16位借位(同上)
 

@@ -22,7 +22,7 @@ int32 arm_inst_sub(cpu_state_t *st, uint32 inst)
 	{
 		st->cpsr.n = result >> 31;
 		st->cpsr.z = result == 0;
-		st->cpsr.c = !borrow(result, regv(rn));
+		st->cpsr.c = regv(rn) >= operand; // !borrow(result, regv(rn));
 		st->cpsr.v = overflow_sub(result, regv(rn), operand);
 	}
 	return EXEC_SUCCESS;
