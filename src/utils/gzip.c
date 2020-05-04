@@ -1,7 +1,8 @@
 #include <stdlib.h>
+#include <zlib.h>
 #include "common/log.h"
 
-#include "zlib/zlib.h"
+// #include "zlib/zlib.h"
 #include "utils/gzip.h"
 
 //TODO 需要考虑多线程的问题。

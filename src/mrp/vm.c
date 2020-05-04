@@ -182,6 +182,8 @@ static int16 c_func_tab[] = {
 	SWI_MR_DRAWREGION,
 };
 
+void vm_install_func(vm_info_t *vm);
+
 vm_info_t *vm_create(uint32 memSize)
 {
 	//内存分配
@@ -214,13 +216,18 @@ vm_info_t *vm_create(uint32 memSize)
 	memset(vm, 0, sizeof(vm_info_t));
 
 	//初始化
-	memMap->vmaddr = (uint64)vm;		//保存虚拟机地址
+	memMap->vmaddr = (void *)vm;		//保存虚拟机地址
 	vm->mem = memMap;					//保存内存映射
 	vm->cpu = cpu;						//保存CPU信息
 	gettimeofday(&vm->startTime, NULL); //初始化创建时间
 
 	//设置一下虚拟机的栈，由于栈是从高往第的，所以SP指向栈的最后一个地址
 	vm->cpu->registers[r_sp] = vm_mem_offset(vm->mem->stack + VM_STACK_SIZE);
+
+	//初始化一下内存
+	mem_init(vm);
+	//安装函数表
+	vm_install_func(vm);
 
 	//返回出去
 	return vm;
@@ -238,14 +245,9 @@ void vm_free(vm_info_t *vm)
 
 	//释放CPU
 	if (vm->cpu != null)
-	{
-		//CPU内存释放
-		if (vm->cpu->mem != null)
-			mem_destory(vm->cpu->mem);
-		//CPU释放
 		cpu_destory(vm->cpu);
-	}
 
+	memset(vm, 0, sizeof(vm_info_t));
 	//释放虚拟机
 	free(vm);
 }
@@ -441,33 +443,36 @@ uint16 *vm_getVideo(vm_info_t *vm, uint32 *size)
 	return vm->mem->video;
 }
 
-void vm_setScreen(vm_info_t *vm, uint32 width, uint32 height, uint32 bits)
+void vm_setConfig(vm_info_t *vm, vm_config_t *conf)
 {
-	mrst.sysinfo.screen_width = width;
-	mrst.sysinfo.screen_height = height;
-	mrst.sysinfo.screen_bits = bits;
+	logi("mv_setConfig(vm=%p, conf=%p)", vm, conf);
+	mrst.sysinfo.screen_width = conf->screenWidth;
+	mrst.sysinfo.screen_height = conf->screenHeight;
+	mrst.sysinfo.screen_bits = 24;
+
+	if (conf->IMEI != null)
+		strncpy(mrst.sysinfo.IMEI, conf->IMEI, min(strlen(conf->IMEI), sizeof(mrst.sysinfo.IMEI) - 1));
+	if (conf->IMSI)
+		strncpy(mrst.sysinfo.IMSI, conf->IMSI, min(strlen(conf->IMSI), sizeof(mrst.sysinfo.IMSI) - 1));
+	if (conf->manufactory)
+		strncpy(mrst.sysinfo.manufactory, conf->manufactory, min(strlen(conf->manufactory), sizeof(mrst.sysinfo.manufactory) - 1));
+	if (conf->type)
+		strncpy(mrst.sysinfo.type, conf->type, min(strlen(conf->type), sizeof(mrst.sysinfo.type) - 1));
+
+	mrst.sysinfo.networkID = conf->networkId;
+
+	if (conf->sdcardDir)
+		strncpy(mrst.sysinfo.sdcard_dir, conf->sdcardDir, min(strlen(conf->sdcardDir), MAX_FILE_PATH_LEN));
+	if (conf->dsmDir)
+		strncpy(mrst.sysinfo.dsm_dir, conf->dsmDir, min(strlen(conf->dsmDir), MAX_FILE_PATH_LEN));
 }
 
-void vm_setSystemInfo(vm_info_t *vm, char *IMEI, char *IMSI, char *manufactory, char *type)
+void **vm_getPointers(vm_info_t *vm)
 {
-	strncpy(mrst.sysinfo.IMEI, IMEI, min(strlen(IMEI), 16));
-	strncpy(mrst.sysinfo.IMSI, IMSI, min(strlen(IMSI), 16));
-	strncpy(mrst.sysinfo.manufactory, manufactory, min(strlen(manufactory), 8));
-	strncpy(mrst.sysinfo.type, type, min(strlen(type), 8));
+	return vm->pointers;
 }
 
-void vm_setNetworkId(vm_info_t *vm, uint32 networkId)
+vm_callback_t *vm_getCallbacks(vm_info_t *vm)
 {
-	mrst.sysinfo.networkID = networkId;
-}
-
-void vm_setStorage(vm_info_t *vm, char *sdcard_dir, char *dsm_dir)
-{
-	strncpy(mrst.sysinfo.sdcard_dir, sdcard_dir, min(strlen(sdcard_dir), MAX_FILE_PATH_LEN));
-	strncpy(mrst.sysinfo.dsm_dir, dsm_dir, min(strlen(dsm_dir), MAX_FILE_PATH_LEN));
-}
-
-void vm_setOnRefresh(vm_info_t *vm, on_screen_refresh_t cb)
-{
-	vm->onRefresh = cb;
+	return &vm->callbacks;
 }

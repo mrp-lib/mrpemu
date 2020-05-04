@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
@@ -9,7 +9,7 @@
 #include "mrp.h"
 #include "utils/coding.h"
 
-#if WIN32
+#ifdef _WIN32
 #define _mkdir mkdir
 #else
 #define _mkdir(dirname) mkdir((dirname), 0777)
@@ -250,7 +250,6 @@ void swi_mr_rmDir(vm_info_t *vm)
 
 	get_filename(vm, fullpathname, dirname);
 
-	//删除权限
 	if (strcasecmp(fullpathname, mrst.sysinfo.sdcard_dir) == 0)
 	{
 		mr_ret(MR_FAILED);

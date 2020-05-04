@@ -30,12 +30,13 @@ typedef struct
 	*/
 } mrp_head_info;
 
-mrp_reader_t *mrp_open(char *filename)
+mrp_reader_t *mrp_open(const char *filename)
 {
 	logi("mrp_open(filename=%s)", filename);
 	//打开文件
 	FILE *fd = fopen(filename, "rb");
-	if (fd == null){
+	if (fd == null)
+	{
 		loge("mrp_open failed when open file");
 		return null;
 	}
@@ -51,16 +52,17 @@ mrp_reader_t *mrp_open(char *filename)
 	mrp_reader_t *reader = (mrp_reader_t *)malloc(sizeof(mrp_reader_t));
 	if (reader == null)
 	{
-		
+
 		loge("mrp_open failed when alloc reader");
 		fclose(fd);
 		return null;
 	}
+
 	//初始化mrp信息
-	strcpy(reader->info.name, head.name);
-	strcpy(reader->info.showName, head.showName);
-	strcpy(reader->info.author, head.author);
-	strcpy(reader->info.desc, head.desc);
+	strncpy(reader->info.name, head.name, sizeof(head.name) - 1);
+	strncpy(reader->info.showName, head.showName, sizeof(head.showName) - 1);
+	strncpy(reader->info.author, head.author, sizeof(head.author) - 1);
+	strncpy(reader->info.desc, head.desc, sizeof(head.desc) - 1);
 	reader->info.version = head.version;
 	reader->info.appid = head.appid;
 	reader->info.ver = ntohl(head.ver);

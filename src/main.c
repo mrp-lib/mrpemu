@@ -18,20 +18,38 @@
 
 #define memSize (1024 * 1024 * 2);
 
+void on_bufferRefresh(vm_info_t *vm, uint16 *bmp, int16 x, int16 y, uint16 w, uint16 h)
+{
+	logi("-------->refreshBuffer");
+}
+
 int32 test_mrp()
 {
-	char *file = "%sdcard/mythroad/Helloworld_176.mrp";
+	char *file = "%Helloworld_240.mrp";
 
 	//创建虚拟机
 	vm_info_t *vm = vm_create(1024 * 400);
-	mem_init(vm);		 //初始化虚拟机内存
-	vm_install_func(vm); //安装函数
+	// mem_init(vm);		 //初始化虚拟机内存
+	// vm_install_func(vm); //安装函数
+
+	vm_config_t conf;
+	conf.screenWidth = 240;
+	conf.screenHeight = 320;
+	conf.networkId = 0;
+	conf.sdcardDir = "sdcard/";
+	conf.dsmDir = "mythroad/";
+	conf.IMEI = "IMEI";
+	conf.IMSI = "IMSI";
+	conf.manufactory = "YIZHI";
+	conf.type = "MRPEMU";
 
 	//设置一下虚拟机信息
-	vm_setScreen(vm, 240, 320, 24);
-	vm_setNetworkId(vm, 0);
-	vm_setSystemInfo(vm, "IMEI", "IMSI", "YIZHI", "MRPEMU");
-	vm_setStorage(vm, "sdcard/", "mythroad/");
+	vm_setConfig(vm, &conf);
+
+	vm_callback_t callbacks;
+	callbacks.onBufferRefresh = on_bufferRefresh;
+
+	// vm_setCallbacks(vm, &callbacks);
 
 	//启动mrp
 	mr_start_dsmC(vm, file);

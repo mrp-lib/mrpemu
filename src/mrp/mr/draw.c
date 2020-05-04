@@ -133,13 +133,13 @@ void swi_mr_refreshBuffer(vm_info_t *vm)
 	logsysc("mr_refreshBuffer(bmp=0x%08x, x=%d, y=%d, w=%d, h=%d)", _mbp, x, y, w, h);
 
 	//调用函数进行刷新
-	if (vm->onRefresh == null)
+	if (!vm->callbacks.onBufferRefresh)
 	{
 		logw("no screen refresh callback provided, ignore!");
 		return;
 	}
 
-	vm->onRefresh(bmp, x, y, w, h);
+	vm->callbacks.onBufferRefresh(vm, bmp, x, y, w, h);
 }
 
 void swi_mr_drawPoint(vm_info_t *vm)

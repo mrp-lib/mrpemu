@@ -11,10 +11,10 @@
 
 #include "mrp/info.h"
 #include "mrp/vm.h"
-#include "mrp/mem.h"
+#include "mrp/sys/mem.h"
 #include "mrp/swi.h"
 
-#include "helper/mr.h"
+#include "mrp/common/helper.h"
 
 #include "mrp/sys/dsm.h"
 #include "mrp/sys/fmt.h"
@@ -26,6 +26,7 @@
 #include "mrp/mr/draw.h"
 #include "mrp/mr/dsm.h"
 #include "mrp/mr/fs.h"
+#include "mrp/mr/gui.h"
 #include "mrp/mr/mem.h"
 #include "mrp/mr/util.h"
 

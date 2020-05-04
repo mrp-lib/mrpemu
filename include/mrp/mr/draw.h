@@ -1,7 +1,7 @@
 #ifndef __MRP_MR_DRAW_H__
 #define __MRP_MR_DRAW_H__
 
-#include "mrp/vm.h"
+#include "mrp/common/helper.h"
 
 #define MR_SPRITE_INDEX_MASK (0x03FF) // mask of bits used for tile index
 #define MR_SPRITE_TRANSPARENT (0x0400)

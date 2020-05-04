@@ -1,9 +1,7 @@
 #ifndef __MRP_MR_DSM_H__
 #define __MRP_MR_DSM_H__
 
-#include "common/type.h"
-#include "mrp/vm.h"
-#include "helper/mr.h"
+#include "mrp/common/helper.h"
 
 typedef int32 (*MR_LOAD_C_FUNCTION)(int32 code);
 typedef int32 (*mrc_extMainSendAppMsg_t)(int32 app, int32 code, int32 param0, int32 param1, int32 param2, int32 param3, int32 param4, int32 extCode);

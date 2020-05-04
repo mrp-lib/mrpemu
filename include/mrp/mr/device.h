@@ -1,8 +1,7 @@
 #ifndef __MRP_MR_DEVICE_H__
 #define __MRP_MR_DEVICE_H__
 
-#include "common/type.h"
-#include "mrp/vm.h"
+#include "mrp/common/helper.h"
 
 typedef struct
 {

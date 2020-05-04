@@ -1,11 +1,9 @@
-#ifndef __MRP_MEM_H__
-#define __MRP_MEM_H__
+#ifndef __MRP_SYS_MEM_H__
+#define __MRP_SYS_MEM_H__
 
-#include "common/type.h"
+#include "mrp/common/helper.h"
 
 #define MEM_MIN_PIECE_SIZE 16 //内存碎片的最小值，保证产生的碎片不会小于这个值，从而保证碎片可以再次利用。这里我就要求分配的内存大小不低于16字节吧。
-
-typedef struct vm_info_st vm_info_t; //额，环形include，这里声明一下吧
 
 /*空闲内存链表*/
 typedef struct mr_free_mem_st

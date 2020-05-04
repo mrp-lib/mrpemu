@@ -1,14 +1,8 @@
 include make/Makefile.cfg
 
-# 链接库列表
-LIBS			:= libiconv
 # 要单独编译的文件，这些文件相对于SRC_DIR目录
 FILES			:=	
-# 中间代码，这些文件位于BUILD_DIR目录下，并且名称和Makefile后缀名称一致
-OBJ_FILES		:=	zlib.o arm.o mrp.o utils.o helper.o
-
-# 生成动态链接库是不能有main函数
-ifneq ($(SHARED), TRUE)
+ifneq ($(TYPE), SHARED)
 	FILES		+=	main.c
 endif
 
@@ -19,11 +13,12 @@ CC_FLAGS_EX		:=	$(CC_FLAGS)
 MAKE_OBJ_FILES	:=	$(addprefix $(BUILD_DIR)/, $(OBJ_FILES))
 C_OBJ_FILES		:=	$(addprefix $(BUILD_DIR)/, $(FILES:%.c=%.o))
 
+
 # 构建最终目标
 $(TARGET_BIN): $(C_OBJ_FILES) $(MAKE_OBJ_FILES)
 	@mkdir -p $(dir $@)
 	@echo "[CC] $^ -> $@"
-	@$(CC) $(LINK_FLAGS) -o $@ $^ -lm
+	@$(CC) $(LINK_FLAGS) -o $@ $^ $(LINK_LIBS)
 
 # 编译需要单独编译的c文件
 $(C_OBJ_FILES): $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c

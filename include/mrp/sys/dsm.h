@@ -4,6 +4,14 @@
 #include "common/type.h"
 #include "mrp/vm.h"
 
+//当事件函数不存在时，会调用testComC来发送事件，此时需要传递这样一个参数。
+typedef struct
+{
+	int32 code;
+	int32 param0;
+	int32 param1;
+} mr_com_event_t;
+
 /*
 对于入口标志：
 	该标志用于启动非dsm根目录的项目。
@@ -26,6 +34,11 @@
 	!null		文件内容，这个指针需要free
 */
 uint8 *read_mrp_file(vm_info_t *vm, char *filename, uint32 *len, bool lookfor);
+
+/*
+调用mr_event函数，用于向虚拟机发送事件
+*/
+int32 mr_event(vm_info_t *vm, int32 code, int32 param0, int32 param1);
 
 /*
 通过入口参数来启动mrp

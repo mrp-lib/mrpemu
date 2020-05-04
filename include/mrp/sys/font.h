@@ -2,9 +2,7 @@
 #define __MRP_FRONT_H__
 
 #include "common/type.h"
-#include "mrp/vm.h"
-
-typedef struct vm_info_st vm_info_t;
+#include "mrp/common/helper.h"
 
 typedef struct font_info_st
 {

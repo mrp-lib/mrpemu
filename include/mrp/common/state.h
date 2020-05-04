@@ -1,28 +1,10 @@
-#ifndef __HELPER_MR_H__
-#define __HELPER_MR_H__
+#ifndef __MRP_COMMON_MRST_H__
+#define __MRP_COMMON_MRST_H__
 
 #include "common/type.h"
-#include "mrp/mem.h"
-
-#define MAX_FILE_PATH_LEN 256 //最大文件路径长度
-
-#define MR_SUCCESS 0 //成功
-#define MR_FAILED -1 //失败
-#define MR_IGNORE 1	 //不关心
-#define MR_WAITING 2 //异步(非阻塞)模式
-
-#define mr_ret(val) (vm->cpu->registers[0] = (val)) //从系统调用中返回一个值给调用函数
-#define mrst (vm->mem->mr_state)					//获取当前虚拟机中的一些运行时状态
-
-#define MR_FILE_MAX_LEN 128		   //mrp文件名及mrp内部文件名的最大长度
-#define MRST_MAX_0FILES 50		   //注册固化应用的最大数量
-#define MRST_INTERNAL_TABLE_MAX 16 //c_internal_table的最大长度
-#define MRST_CPORT_TABLE_MAX 4	   //c_port_table的最大长度
-
-#define BITMAPMAX 30
-#define SPRITEMAX 10
-#define TILEMAX 3
-#define SOUNDMAX 5
+#include "mrp/common/macro.h"
+#include "mrp/sys/mem.h"
+#include "mrp/sys/dsm.h"
 
 typedef struct
 {
@@ -79,12 +61,12 @@ typedef struct mr_sys_info_st
 	uint32 screen_height; //屏幕高度
 	uint32 screen_bits;	  //屏幕色深，24位
 
-	uint8 IMEI[16];		 //IMEI
-	uint8 IMSI[16];		 //IMSI
-	char manufactory[8]; //厂商名，最大7个字符，空字节填\0
-	char type[8];		 //mobile type，最大7个字符，空字节填\0
-	uint32 ver;			 //SW ver
-	uint8 spare[12];	 //备用
+	uint8 IMEI[16 + 1];		 //IMEI
+	uint8 IMSI[16 + 1];		 //IMSI
+	char manufactory[8 + 1]; //厂商名，最大7个字符，空字节填\0
+	char type[8 + 1];		 //mobile type，最大7个字符，空字节填\0
+	uint32 ver;				 //SW ver
+	uint8 spare[12 + 1];	 //备用
 
 	char sdcard_dir[MAX_FILE_PATH_LEN]; //SD卡目录
 	char dsm_dir[MAX_FILE_PATH_LEN];	//dsm目录，一般是mythroad啦
@@ -177,6 +159,8 @@ typedef struct
 	vmpt mr_pauseApp_function;	//原型： (void) -> int32
 	vmpt mr_resumeApp_function; //原型： (void) -> int32
 
+	mr_com_event_t com_param_event; //testComC-事件处理参数
+
 	//一些标志状态
 	int8 mr_soundOn;
 	int8 mr_shakeOn;
@@ -194,7 +178,5 @@ typedef struct
 	vmpt mr_sms_cfg_buf; //实际类型uint8*
 
 } mr_state_t;
-
-typedef int32 (*MR_C_FUNCTION)(void *P, int32 code, uint8 *input, int32 input_len, uint8 **output, int32 *output_len);
 
 #endif

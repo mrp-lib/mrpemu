@@ -1,8 +1,7 @@
 #ifndef __MRP_MR_FS_H__
 #define __MRP_MR_FS_H__
 
-#include "common/type.h"
-#include "mrp/vm.h"
+#include "mrp/common/helper.h"
 
 #define MR_FILE_RDONLY 1	//以只读的方式打开文件。
 #define MR_FILE_WRONLY 2	//以只写的方式打开文件。

@@ -107,6 +107,41 @@ void handle_interapt(vm_info_t *vm, uint32 nu)
 	case SWI_MR_DRAWBITMAP:
 		return swi_mr_drawBitmap(vm);
 
+	case SWI_MR_MENUCREATE:
+		return swi_mr_menuCreate(vm);
+	case SWI_MR_MENUSETITEM:
+		return swi_mr_menuSetItem(vm);
+	case SWI_MR_MENUSHOW:
+		return swi_mr_menuShow(vm);
+	case SWI_MR_MENUSETFOCUS:
+		return swi_mr_menuSetFocus(vm);
+	case SWI_MR_MENURELEASE:
+		return swi_mr_menuRelease(vm);
+	case SWI_MR_MENUREFRESH:
+		return swi_mr_menuRefresh(vm);
+	case SWI_MR_DIALOGCREATE:
+		return swi_mr_dialogCreate(vm);
+	case SWI_MR_DIALOGRELEASE:
+		return swi_mr_dialogRelease(vm);
+	case SWI_MR_DIALOGREFRESH:
+		return swi_mr_dialogRefresh(vm);
+	case SWI_MR_TEXTCREATE:
+		return swi_mr_textCreate(vm);
+	case SWI_MR_TEXTRELEASE:
+		return swi_mr_textRelease(vm);
+	case SWI_MR_TEXTREFRESH:
+		return swi_mr_textRefresh(vm);
+	case SWI_MR_EDITCREATE:
+		return swi_mr_editCreate(vm);
+	case SWI_MR_EDITRELEASE:
+		return swi_mr_editRelease(vm);
+	case SWI_MR_EDITGETTEXT:
+		return swi_mr_editGetText(vm);
+	case SWI_MR_WINCREATE:
+		return swi_mr_winCreate(vm);
+	case SWI_MR_WINRELEASE:
+		return swi_mr_winRelease(vm);
+
 	case SWI_MR_GETSCREENINFO:
 		return swi_mr_getScreenInfo(vm);
 

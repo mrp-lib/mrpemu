@@ -49,7 +49,7 @@ typedef struct
 参数:
 	filename		文件名
 */
-mrp_reader_t *mrp_open(char *filename);
+mrp_reader_t *mrp_open(const char *filename);
 
 /*
 关闭mrp

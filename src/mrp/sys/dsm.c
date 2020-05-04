@@ -22,7 +22,9 @@ uint8 *read_mrp_file(vm_info_t *vm, char *filename, uint32 *len, bool lookfor)
 	else
 	{
 		//打开mrp文件
-		mrp_reader_t *reader = mrp_open(mrst.pack_filename);
+		char mrpfilename[MAX_FILE_PATH_LEN] = {0};
+		sprintf(mrpfilename, "%s%s%s", mrst.sysinfo.sdcard_dir, mrst.sysinfo.dsm_dir, mrst.pack_filename);
+		mrp_reader_t *reader = mrp_open(mrpfilename);
 		if (reader == null)
 		{
 			free(buffer);
@@ -159,6 +161,8 @@ int32 intra_start(vm_info_t *vm, char *filename, char *entry)
 	strncpy(mrst.entry, entry, MR_FILE_MAX_LEN - 1);
 	mrst.mr_state = 1;
 
+	logi("intra_start(vm=%p, filename=%s, entry=%s)", vm, filename, entry);
+
 	int32 ret = do_ext(vm, filename);
 	if (ret != 0)
 		ret = do_ext(vm, START_EXT);
@@ -170,6 +174,33 @@ int32 intra_start(vm_info_t *vm, char *filename, char *entry)
 	}
 
 	return MR_SUCCESS;
+}
+
+//调用一次事件处理函数
+int32 _mr_event_param(vm_info_t *vm, int32 code, int32 param0, int32 param1)
+{
+	vmreg(0) = code;
+	vmreg(1) = param0;
+	vmreg(2) = param1;
+}
+
+int32 mr_event(vm_info_t *vm, int32 code, int32 param0, int32 param1)
+{
+	logi("mr_event(code=%d, param0=%d, param1=%d)", code, param0, param1);
+	//设置参数，准备调用
+	_mr_event_param(vm, code, param0, param1);
+	if (mrst.mr_event_function == 0)
+	{
+		mrst.com_param_event.code = code;
+		mrst.com_param_event.param0 = param0;
+		mrst.com_param_event.param1 = param1;
+		int32 ret = mr_testComC(vm, 801, vm_mem_offset(&mrst.com_param_event), sizeof(mr_com_event_t), 1);
+		return ret;
+	}
+	else
+	{
+		return vm_run(vm, mrst.mr_event_function);
+	}
 }
 
 int32 mr_start_dsm(vm_info_t *vm, char *entry)
